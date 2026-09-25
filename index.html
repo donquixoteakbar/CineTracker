@@ -19,7 +19,7 @@
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body { font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif; margin: 0; background-color: var(--bg-color); color: var(--text-main); overflow: hidden; width: 100vw; height: 100vh; }
 
-        /* --- Animasi Logo Senter (Cinematic Elegan) --- */
+        /* --- Animasi Logo Senter --- */
         .app-header { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; padding: 5px 0; }
         .ticket-icon { color: var(--gold); font-size: 24px; -webkit-text-stroke: 1px black; transform: rotate(-15deg); filter: drop-shadow(1px 2px 1px rgba(0,0,0,0.2)); }
         
@@ -48,6 +48,7 @@
         .movie-card img { width: 100%; aspect-ratio: 2/3; border-radius: 12px; object-fit: cover; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
         .movie-card .title { font-size: 13px; font-weight: 600; margin-top: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         
+        /* INDIKATOR BADGE FILM (EXPLORE) */
         .card-badge { position: absolute; top: 6px; right: 6px; background: rgba(0,0,0,0.7); border-radius: 50%; width: 22px; height: 22px; display: flex; justify-content: center; align-items: center; font-size: 11px; z-index: 5; backdrop-filter: blur(4px); box-shadow: 0 2px 5px rgba(0,0,0,0.3); }
         .card-badge.watched { color: #34c759; }
         .card-badge.favorite { color: #ff2d55; }
@@ -115,7 +116,7 @@
         .crop-container img { max-width: 100%; max-height: 80vh; }
         .crop-controls { padding: 20px; display:flex; gap:15px; background:#1c1c1e; }
         
-        /* --- Custom Modals (Exit & Delete APK) --- */
+        /* --- Custom Modals APK --- */
         .custom-modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); opacity: 0; visibility: hidden; transition: 0.3s; z-index: 6000; display:flex; justify-content:center; align-items:center; }
         .custom-modal-overlay.active { opacity: 1; visibility: visible; }
         .custom-modal { background: var(--surface-color); width: 80%; max-width: 320px; border-radius: 14px; text-align: center; padding: 20px 20px 0 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); transform: scale(0.95); transition: 0.3s; }
@@ -134,23 +135,14 @@
 </head>
 <body>
 
-    <!-- Toast UI -->
     <div id="ios-toast" class="toast"><i class="fas fa-check-circle" style="color:#34c759; font-size:18px;"></i><span id="toast-message">Berhasil</span></div>
 
-    <!-- MODAL CUSTOM UMUM -->
-    <div class="custom-modal-overlay" id="delete-modal-overlay">
-        <div class="custom-modal">
-            <div class="custom-modal-title">Hapus Film?</div>
-            <div class="custom-modal-desc" id="delete-modal-desc">Yakin ingin menghapus film ini dari daftarmu?</div>
-            <div class="custom-modal-actions"><button class="custom-modal-btn" onclick="closeDeleteModalVisual()">Batal</button><button class="custom-modal-btn danger" onclick="executeDeleteMovie()">Hapus</button></div>
-        </div>
-    </div>
-
+    <!-- HANYA MODAL EXIT YANG DISISAKAN (Hapus & Cari Teman pakai Native/In-page) -->
     <div class="custom-modal-overlay" id="exit-modal-overlay">
         <div class="custom-modal">
             <div class="custom-modal-title">Keluar Aplikasi?</div>
             <div class="custom-modal-desc">Apakah kamu yakin ingin keluar dari CineTracker?</div>
-            <div class="custom-modal-actions"><button class="custom-modal-btn" onclick="closeExitModalVisual()">Tidak</button><button class="custom-modal-btn danger" onclick="executeExitApp()">Ya, Keluar</button></div>
+            <div class="custom-modal-actions"><button class="custom-modal-btn" onclick="closeLayerProgrammatically()">Tidak</button><button class="custom-modal-btn danger" onclick="executeExitApp()">Ya, Keluar</button></div>
         </div>
     </div>
 
@@ -236,7 +228,6 @@
                     <div class="avatar-edit-btn"><i class="fas fa-camera"></i></div>
                 </div>
                 <input type="file" id="avatar-upload" accept="image/*" style="display:none;" onchange="initCrop(event)">
-                
                 <h3 id="display-username" style="margin-top:0; font-size: 24px;">@username</h3>
                 
                 <div style="display:flex; justify-content:space-around; margin: 20px 0 10px 0; padding: 15px 0; border-top: 1px solid #e3e3e8;">
@@ -343,7 +334,6 @@
                 <option value="za">Z - A (Judul)</option>
             </select>
         </div>
-        <p style="text-align:center; font-size: 12px; color: var(--text-muted); margin: 0 20px;">Tekan film untuk menyalin ke tracker-mu.</p>
         <div id="friend-tracker-content" style="margin: 10px 20px;"></div>
     </div>
 
@@ -354,28 +344,44 @@
 
     <!-- ================= LOGIKA APLIKASI ================= -->
     <script>
-        // --- 1. MASTER BACK TRAP (ANTI FORCE CLOSE APK) ---
-        window.addEventListener('load', () => { history.pushState({ intercept: true }, ''); });
+        // --- 1. HISTORY NATIVE & ROUTING HASH (ANTI KELUAR) ---
+        let modalStack = []; let isScriptHash = false;
         
-        window.addEventListener('popstate', (e) => {
-            // Panggil ulang jebakannya agar tidak keluar aplikasi
-            history.pushState({ intercept: true }, '');
+        function openLayer(layerId) { 
+            isScriptHash = true; 
+            modalStack.push(layerId); 
+            window.location.hash = "view_" + Date.now(); 
+            if(layerId === 'exit') { document.getElementById('exit-modal-overlay').classList.add('active'); }
+        }
 
-            // Logika Penutupan Berdasarkan Hierarki Visual
-            if (document.getElementById('crop-modal').style.display === 'flex') { closeCropVisual(); } 
-            else if (document.getElementById('rating-overlay').classList.contains('active')) { closeRatingVisual(); } 
-            else if (document.getElementById('sheet-overlay').classList.contains('active')) { closeSheetVisual(); } 
-            else if (document.getElementById('delete-modal-overlay').classList.contains('active')) { closeDeleteModalVisual(); } 
-            else if (document.getElementById('exit-modal-overlay').classList.contains('active')) { closeExitModalVisual(); } 
-            else if (friendActiveFolder !== "") { goBackToFriendFolder(); } 
-            else if (activeFolderName !== "") { goBackToFolder(); } 
-            else if (document.getElementById('friend-panel').style.transform === 'translateX(0px)' || document.getElementById('friend-panel').style.transform === 'translateX(0)') { 
-                closeFriendPanelVisual(); switchPageVisual('profile', document.querySelectorAll('.nav-item')[2]); 
-            } 
-            else if (isSearchOpen) { closeSearchVisual(); } 
-            else if (currentPage === 'tracker' || currentPage === 'profile') { switchPageVisual('home', document.querySelectorAll('.nav-item')[0]); } 
-            else if (currentPage === 'home') { showExitModal(); }
+        window.addEventListener('hashchange', function() {
+            if (isScriptHash) { isScriptHash = false; return; }
+            if (modalStack.length > 0) { 
+                const topLayer = modalStack.pop(); 
+                executeCloseVisual(topLayer); 
+            } else { 
+                openLayer('exit'); 
+            }
         });
+
+        function closeLayerProgrammatically() { if (modalStack.length > 0) history.back(); }
+
+        function executeCloseVisual(layerId) {
+            if(layerId === 'crop') { document.getElementById('crop-modal').style.display = 'none'; if(cropper) cropper.destroy(); }
+            else if(layerId === 'sheet') { document.getElementById('sheet-overlay').classList.remove('active'); document.getElementById('movie-sheet').classList.remove('active'); }
+            else if(layerId === 'rating') { document.getElementById('rating-overlay').classList.remove('active'); document.getElementById('rating-sheet').classList.remove('active'); activeRatingId = null; }
+            else if(layerId === 'search') { isSearchOpen = false; document.getElementById('search-input').value = ''; document.getElementById('explore-area').style.display = 'block'; document.getElementById('search-area').style.display = 'none'; document.getElementById('search-container').innerHTML = ''; }
+            else if(layerId === 'friend_panel') { document.getElementById('friend-panel').style.transform = 'translateX(100%)'; }
+            else if(layerId === 'exit') { document.getElementById('exit-modal-overlay').classList.remove('active'); }
+            else if(layerId.startsWith('dir_')) { 
+                let parts = activeFolderName.split('/'); parts.pop(); activeFolderName = parts.join('/');
+                renderTrackerData();
+            }
+            else if(layerId.startsWith('fdir_')) { 
+                let parts = friendActiveFolder.split('/'); parts.pop(); friendActiveFolder = parts.join('/');
+                renderFriendTrackerData();
+            }
+        }
 
         // --- 2. UTILITAS & BADGE ---
         function showToast(message, type = "success") {
@@ -390,7 +396,7 @@
         let currentUser = null; let userFolders = []; let friendFolders = []; let myFriends = []; let activeFriendProfile = null;
         let selectedMovie = null; let trackerDataCache = []; let friendTrackerCache = [];
         let currentFilter = 'all'; let activeFolderName = ''; let friendFilter = 'all'; let friendActiveFolder = '';
-        let activeRatingId = null; let cropper = null; let sortableInstance = null; let pendingDeleteId = null; let pendingDeleteTitle = ""; let isSearchOpen = false;
+        let activeRatingId = null; let cropper = null; let sortableInstance = null; let isSearchOpen = false;
 
         function getMovieBadge(tmdbId) {
             const item = trackerDataCache.find(i => i.tmdb_id == tmdbId);
@@ -425,7 +431,7 @@
         }
         function switchPage(targetPageId, navElement) {
             if (currentPage === targetPageId) return;
-            if(isSearchOpen) closeSearchVisual();
+            if(isSearchOpen) closeLayerProgrammatically();
             switchPageVisual(targetPageId, navElement);
         }
 
@@ -450,10 +456,10 @@
         document.getElementById('search-form').addEventListener('submit', function(e) { e.preventDefault(); document.getElementById('search-input').blur(); });
         document.getElementById('search-input').addEventListener('input', function() {
             clearTimeout(searchTimeout); const query = this.value.trim();
-            if(query.length === 0) { closeSearchVisual(); return; }
+            if(query.length === 0) { if(isSearchOpen) closeLayerProgrammatically(); return; }
             if(query.length < 2) return; 
             searchTimeout = setTimeout(async () => {
-                isSearchOpen = true; document.getElementById('explore-area').style.display = 'none'; document.getElementById('search-area').style.display = 'block';
+                if(!isSearchOpen) { openLayer('search'); isSearchOpen = true; document.getElementById('explore-area').style.display = 'none'; document.getElementById('search-area').style.display = 'block'; }
                 document.getElementById('search-title').innerText = `Mencari: "${query}"...`;
                 const container = document.getElementById('search-container'); container.innerHTML = '<p style="grid-column: 1 / -1; text-align:center;">Mencari film...</p>';
                 try {
@@ -487,6 +493,7 @@
         }
 
         async function openSheetFromEncoded(encodedStr) {
+            openLayer('sheet');
             selectedMovie = JSON.parse(decodeURIComponent(encodedStr)); const isTV = selectedMovie.media_type === 'tv';
             document.getElementById('sheet-poster').src = IMG_URL + selectedMovie.poster_path; document.getElementById('sheet-title').innerText = selectedMovie.title; document.getElementById('sheet-meta').innerText = "Memuat..."; document.getElementById('sheet-rating').innerHTML = ""; document.getElementById('sheet-genres').innerHTML = ""; document.getElementById('sheet-overview').innerText = "Sedang mengambil detail...";
             
@@ -498,7 +505,7 @@
                 const res = await fetch(`${BASE_URL}${isTV ? '/tv/' : '/movie/'}${selectedMovie.id}?api_key=${TMDB_API_KEY}&language=id-ID`); const detail = await res.json();
                 const year = (detail.release_date || detail.first_air_date || "N/A").substring(0,4); const runtime = detail.runtime || (detail.episode_run_time && detail.episode_run_time[0]) || 0; const rating = detail.vote_average ? detail.vote_average.toFixed(1) : "N/A";
                 selectedMovie.runtime = runtime;
-                document.getElementById('sheet-meta').innerText = `${year} • ${runtime} Mnt • ${isTV ? 'TV' : 'Movie'}`; document.getElementById('sheet-rating').innerHTML = `<i class="fas fa-star"></i> ${rating} <span style="color:var(--text-muted); font-size:12px; font-weight:normal;">/ 10</span>`; document.getElementById('sheet-overview').innerText = detail.overview || "Tidak ada sinopsis bahasa Indonesia.";
+                document.getElementById('sheet-meta').innerText = `${year} • ${runtime} Mnt • ${isTV ? 'TV Series' : 'Movie'}`; document.getElementById('sheet-rating').innerHTML = `<i class="fas fa-star"></i> ${rating} <span style="color:var(--text-muted); font-size:12px; font-weight:normal;">/ 10</span>`; document.getElementById('sheet-overview').innerText = detail.overview || "Tidak ada sinopsis bahasa Indonesia.";
                 if(detail.genres) document.getElementById('sheet-genres').innerHTML = detail.genres.slice(0,3).map(g=>`<span class="sheet-tag">${g.name}</span>`).join('');
             } catch (err) {}
         }
@@ -506,7 +513,7 @@
 
         // --- 6. CROPPER ---
         function initCrop(event) {
-            const file = event.target.files[0]; if (!file) return;
+            const file = event.target.files[0]; if (!file) return; openLayer('crop');
             const reader = new FileReader();
             reader.onload = function(e) {
                 document.getElementById('crop-modal').style.display = 'flex'; const image = document.getElementById('crop-image'); image.src = e.target.result;
@@ -517,14 +524,14 @@
         function closeCropVisual() { document.getElementById('crop-modal').style.display = 'none'; if(cropper) cropper.destroy(); }
         async function applyCrop() {
             if(!cropper || !currentUser) return; showToast("Menyimpan foto...");
-            const canvas = cropper.getCroppedCanvas({ width: 400, height: 400 }); const base64Avatar = canvas.toDataURL('image/jpeg', 0.85); document.getElementById('profile-avatar').src = base64Avatar; closeCropVisual(); 
+            const canvas = cropper.getCroppedCanvas({ width: 400, height: 400 }); const base64Avatar = canvas.toDataURL('image/jpeg', 0.85); document.getElementById('profile-avatar').src = base64Avatar; closeLayerProgrammatically(); 
             const { error } = await window.supabaseClient.from('ct_profiles').update({ avatar_url: base64Avatar }).eq('id', currentUser.id);
             if(error) showToast("Gagal", "error"); else showToast("Foto diperbarui!");
         }
 
         // --- 7. RATING MODAL ---
         function openRatingModal(tmdbId, currentRating) {
-            activeRatingId = tmdbId; document.getElementById('rating-slider').value = currentRating || 0.0; updateRatingDisplay(currentRating || 0.0);
+            openLayer('rating'); activeRatingId = tmdbId; document.getElementById('rating-slider').value = currentRating || 0.0; updateRatingDisplay(currentRating || 0.0);
             document.getElementById('rating-overlay').classList.add('active'); document.getElementById('rating-sheet').classList.add('active');
         }
         function closeRatingVisual() { document.getElementById('rating-overlay').classList.remove('active'); document.getElementById('rating-sheet').classList.remove('active'); activeRatingId = null; }
@@ -533,21 +540,19 @@
         async function saveRating() {
             if(!activeRatingId || !currentUser) return; const val = parseFloat(document.getElementById('rating-slider').value);
             const { error } = await window.supabaseClient.from('ct_watch_history').update({ user_rating: val }).eq('user_id', currentUser.id).eq('tmdb_id', activeRatingId);
-            if(!error) { showToast("Rating disimpan!"); const item = trackerDataCache.find(i=>i.tmdb_id===activeRatingId); if(item) item.user_rating = val; renderTrackerData(); closeRatingVisual(); } else showToast("Gagal", "error");
+            if(!error) { showToast("Rating disimpan!"); const item = trackerDataCache.find(i=>i.tmdb_id===activeRatingId); if(item) item.user_rating = val; renderTrackerData(); closeLayerProgrammatically(); } else showToast("Gagal", "error");
         }
 
-        // --- 8. CUSTOM MODALS (Delete & Exit APK) ---
-        function showExitModal() { document.getElementById('exit-modal-overlay').classList.add('active'); }
+        // --- 8. DELETE & EXIT MODALS ---
         function closeExitModalVisual() { document.getElementById('exit-modal-overlay').classList.remove('active'); }
         function executeExitApp() { if (navigator.app) { navigator.app.exitApp(); } else if (navigator.device) { navigator.device.exitApp(); } else { window.close(); } }
 
-        function showDeleteModal(tmdbId, title) { pendingDeleteId = tmdbId; document.getElementById('delete-modal-desc').innerText = `Yakin ingin menghapus "${title}"?`; document.getElementById('delete-modal-overlay').classList.add('active'); }
-        function closeDeleteModalVisual() { document.getElementById('delete-modal-overlay').classList.remove('active'); pendingDeleteId = null; }
-        async function executeDeleteMovie() {
-            if(!pendingDeleteId) return; const idToDel = pendingDeleteId; closeDeleteModalVisual(); 
-            const el = document.querySelector(`.list-item[data-id="${idToDel}"]`); if(el) { el.style.opacity = '0'; setTimeout(() => el.remove(), 300); }
-            trackerDataCache = trackerDataCache.filter(item => item.tmdb_id !== idToDel); calculateWatchTime(trackerDataCache, 'stat-watchtime'); showToast("Dihapus!"); updateAllBadges();
-            await window.supabaseClient.from('ct_watch_history').delete().eq('user_id', currentUser.id).eq('tmdb_id', idToDel);
+        async function deleteMovieViaConfirm(tmdbId, title) {
+            if(!confirm(`Yakin ingin menghapus "${title}" dari koleksimu?`)) return;
+            const el = document.querySelector(`.list-item[data-id="${tmdbId}"]`); if(el) { el.style.opacity = '0'; setTimeout(() => el.remove(), 300); }
+            trackerDataCache = trackerDataCache.filter(item => item.tmdb_id !== tmdbId); calculateWatchTime(trackerDataCache, 'stat-watchtime'); showToast("Dihapus!"); updateAllBadges();
+            await window.supabaseClient.from('ct_watch_history').delete().eq('user_id', currentUser.id).eq('tmdb_id', tmdbId);
+            renderTrackerData(); // Render seketika agar langsung lenyap
         }
 
         // --- 9. SUPABASE INIT ---
@@ -557,9 +562,12 @@
         script.onload = async () => { if (window.supabase) { window.supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth: { storage: persistentStorage, autoRefreshToken: true, persistSession: true } }); await checkSession(); } };
         document.body.appendChild(script);
 
-        setTimeout(() => { fetchMovies('/trending/all/day?', 'trending-container'); }, 500);
-        setTimeout(() => { fetchMovies('/discover/movie?with_companies=420', 'marvel-container'); }, 1500);
-        setTimeout(() => { fetchMovies('/discover/movie?with_companies=12806|9993', 'dc-container'); }, 2500);
+        window.onload = async () => {
+            history.pushState({ page: 'home' }, '');
+            setTimeout(() => { fetchMovies('/trending/all/day?', 'trending-container'); }, 100);
+            setTimeout(() => { fetchMovies('/discover/movie?with_companies=420', 'marvel-container'); }, 600);
+            setTimeout(() => { fetchMovies('/discover/movie?with_companies=12806|9993', 'dc-container'); }, 1100);
+        };
 
         function generateDummyEmail(rawUsername) { return rawUsername.toLowerCase().replace(/\s+/g, '') + "@cinetracker.app"; }
         async function fetchUserProfile(userId, imgElementId) {
@@ -594,33 +602,46 @@
         }
         async function handleLogout() { 
             await window.supabaseClient.auth.signOut(); trackerDataCache = []; friendTrackerCache = []; userFolders = []; myFriends = [];
-            if(isSearchOpen) closeSearchVisual(); document.getElementById('search-input').value = '';
+            if(isSearchOpen) closeLayerProgrammatically(); document.getElementById('search-input').value = '';
             document.getElementById('tracker-content').innerHTML = `<i class="fas fa-bookmark fa-3x" style="color:#8e8e93; margin-bottom:15px;"></i><p style="color:#8e8e93; font-size:14px;">Silakan login di tab Profile.</p>`; 
             document.getElementById('stat-watched').innerText="0"; document.getElementById('stat-watchlist').innerText="0"; document.getElementById('stat-favorite').innerText="0"; document.getElementById('stat-watchtime').innerText="0 Jam"; 
             document.getElementById('friend-search-input').value = ''; document.getElementById('friend-search-msg').innerText = ''; document.getElementById('friend-list-container').innerHTML = '<p style="font-size: 13px; color: var(--text-muted);">Silakan login.</p>';
             await checkSession(); updateAllBadges();
         }
 
-        // --- 10. TRACKER LOKAL & FOLDER ---
-        function setFilter(filterType, btnElement) { currentFilter = filterType; document.querySelectorAll('#page-tracker .segmented-btn').forEach(btn => btn.classList.remove('active')); if(btnElement) btnElement.classList.add('active'); renderTrackerData(); }
+        // --- 10. TRACKER LOKAL & FOLDER BERSARANG ---
+        function setFilter(filterType, btnElement) { 
+            currentFilter = filterType; document.querySelectorAll('#page-tracker .segmented-btn').forEach(btn => btn.classList.remove('active')); 
+            if(btnElement) btnElement.classList.add('active'); 
+            if(filterType !== 'folders' && filterType !== 'folder_view') activeFolderName = ''; // Bersihkan path jika pindah tab filter
+            renderTrackerData(); 
+        }
 
         async function createFolder() {
-            const childName = prompt("Nama Folder Baru:\n(Gunakan garis miring '/' jika ingin sub-folder, misal: Marvel/Spiderman)");
+            const childName = prompt("Nama Folder Baru:\n(Ketik 'Induk/Anak' untuk bikin Sub-folder. Contoh: Marvel/Spiderman)");
             if(!childName || childName.trim() === "") return;
             const cleanName = childName.trim().replace(/\/+/g, '/').replace(/^\/|\/$/g, ''); 
             const fullPath = activeFolderName === "" ? cleanName : activeFolderName + "/" + cleanName;
             
-            if(userFolders.includes(fullPath)) return showToast("Folder sudah ada!", "error");
-            userFolders.push(fullPath);
+            // Auto bikin folder induk jika belum ada
+            const parts = fullPath.split('/'); let curPath = ""; let isUpdated = false;
+            for(let p of parts) {
+                curPath += (curPath === "" ? "" : "/") + p;
+                if(!userFolders.includes(curPath)) { userFolders.push(curPath); isUpdated = true; }
+            }
+            if(!isUpdated) return showToast("Folder sudah ada!", "error");
+            
             const {error} = await window.supabaseClient.from('ct_profiles').update({custom_folders: userFolders}).eq('id', currentUser.id);
-            if(error) { userFolders.pop(); showToast("Gagal", "error"); } else { showToast("Dibuat!"); updateFolderDropdowns(); renderTrackerData(); }
+            if(error) { showToast("Gagal", "error"); } else { showToast("Dibuat!"); updateFolderDropdowns(); renderTrackerData(); }
         }
+
         async function deleteFolder(e, folderName) {
-            e.stopPropagation(); if(!confirm(`Hapus folder "${folderName}"? Film di dalamnya akan tetap ada di list utama.`)) return;
-            userFolders = userFolders.filter(f => f !== folderName);
+            e.stopPropagation(); if(!confirm(`Hapus folder "${folderName}"? Film di dalamnya akan tetap ada di menu "Semua".`)) return;
+            userFolders = userFolders.filter(f => f !== folderName && !f.startsWith(folderName + '/'));
             await window.supabaseClient.from('ct_profiles').update({custom_folders: userFolders}).eq('id', currentUser.id);
-            await window.supabaseClient.from('ct_watch_history').update({folder_name: null}).eq('user_id', currentUser.id).eq('folder_name', folderName);
-            trackerDataCache.forEach(i => { if(i.folder_name === folderName) i.folder_name = null; }); showToast("Dihapus!"); updateFolderDropdowns(); renderTrackerData();
+            await window.supabaseClient.from('ct_watch_history').update({folder_name: null}).eq('user_id', currentUser.id).like('folder_name', folderName + '%');
+            trackerDataCache.forEach(i => { if(i.folder_name && (i.folder_name === folderName || i.folder_name.startsWith(folderName + '/'))) i.folder_name = null; }); 
+            showToast("Dihapus!"); updateFolderDropdowns(); renderTrackerData();
         }
 
         function getDirectSubfolders(currentPath, allFolders) {
@@ -628,23 +649,19 @@
             allFolders.forEach(f => {
                 if (f.startsWith(prefix) && f !== currentPath) {
                     const remainder = f.substring(prefix.length); const directChild = remainder.split('/')[0];
-                    subs.add(prefix + directChild);
+                    if (directChild) subs.add(prefix + directChild);
                 }
             }); return Array.from(subs).sort();
         }
 
-        function openFolder(fPath) { activeFolderName = fPath; currentFilter = 'folder_view'; renderTrackerData(); }
-        function goBackToFolder() {
-            let parts = activeFolderName.split('/'); parts.pop(); activeFolderName = parts.join('/');
-            if(activeFolderName === "") { currentFilter = 'folders'; }
-            renderTrackerData();
-        }
+        function openFolder(fPath) { openLayer('dir_' + fPath); activeFolderName = fPath; currentFilter = 'folders'; renderTrackerData(); }
+        function goBackToFolder() { closeLayerProgrammatically(); } // Dipicu tombol panah kiri
 
         async function saveToTracker(status) {
-            if(!currentUser) { showToast("Login dulu!", "error"); closeSheetVisual(); switchPageVisual('profile', document.querySelectorAll('.nav-item')[2]); return; }
+            if(!currentUser) { showToast("Login dulu!", "error"); closeLayerProgrammatically(); switchPageVisual('profile', document.querySelectorAll('.nav-item')[2]); return; }
             const chosenFolder = document.getElementById('sheet-folder-select').value; const folderVal = chosenFolder === "" ? null : chosenFolder;
             const { error } = await window.supabaseClient.from('ct_watch_history').upsert({ user_id: currentUser.id, tmdb_id: selectedMovie.id, media_type: selectedMovie.media_type, title: selectedMovie.title, poster_path: selectedMovie.poster_path, status: status, runtime: selectedMovie.runtime || 0, custom_order: Date.now(), folder_name: folderVal }, { onConflict: 'user_id, tmdb_id' });
-            if (error) showToast("Gagal", "error"); else { showToast("Tersimpan!"); closeSheetVisual(); fetchAndRenderTracker(); updateAllBadges();}
+            if (error) showToast("Gagal", "error"); else { showToast("Tersimpan!"); closeLayerProgrammatically(); fetchAndRenderTracker(); updateAllBadges();}
         }
 
         async function fetchAndRenderTracker() {
@@ -658,7 +675,7 @@
             const totalMinutes = watchedItems.reduce((acc, curr) => acc + (curr.runtime || 0), 0);
             if(totalMinutes === 0) { document.getElementById(elementId).innerText = "0 Jam"; return; }
             const days = Math.floor(totalMinutes / (24 * 60)); const hours = Math.floor((totalMinutes % (24 * 60)) / 60); const mins = totalMinutes % 60;
-            let timeStr = ""; if(days > 0) timeStr += `${days} Hari, `; if(hours > 0) timeStr += `${hours} Jam, `; timeStr += `${mins} Mnt`;
+            let timeStr = ""; if(days > 0) timeStr += `${days} Hr, `; if(hours > 0) timeStr += `${hours} Jam, `; timeStr += `${mins} Mnt`;
             document.getElementById(elementId).innerText = timeStr;
         }
 
@@ -679,33 +696,50 @@
         function renderTrackerData() {
             const container = document.getElementById('tracker-content'); container.innerHTML = '';
             
+            // Hitung Data Badge Statistik
+            let countWatched = 0, countWatchlist = 0, countFavorite = 0; 
+            trackerDataCache.forEach(item => { if(item.status === 'watched') countWatched++; else if(item.status === 'watchlist') countWatchlist++; else if(item.status === 'favorite') countFavorite++; });
+            document.getElementById('stat-watched').innerText = countWatched; document.getElementById('stat-watchlist').innerText = countWatchlist; document.getElementById('stat-favorite').innerText = countFavorite;
+
+            const sortType = document.getElementById('sort-tracker').value;
+            let displayedData = [];
+
             if(currentFilter === 'folders') {
                 document.getElementById('sort-tracker').style.display = 'block'; 
                 if(activeFolderName === "") { document.getElementById('tracker-list-title').innerText = "Daftar Folder"; } 
                 else { const parentName = activeFolderName.split('/').pop(); document.getElementById('tracker-list-title').innerHTML = `<span style="color:var(--accent); cursor:pointer;" onclick="goBackToFolder()"><i class="fas fa-arrow-left"></i> ${parentName}</span>`; }
 
-                container.innerHTML = `<button class="btn-primary" style="margin-bottom:20px;" onclick="createFolder()"><i class="fas fa-plus"></i> Buat Folder di Sini</button>`;
+                container.innerHTML = `<button class="btn-primary" style="margin-bottom:20px;" onclick="createFolder()"><i class="fas fa-plus"></i> ${activeFolderName === "" ? "Buat Folder Baru" : "Buat Sub-Folder"}</button>`;
                 
+                // RENDER FOLDER
                 const subs = getDirectSubfolders(activeFolderName, userFolders);
                 subs.forEach(f => {
-                    const folderNameUI = f.split('/').pop(); const count = trackerDataCache.filter(i => i.folder_name && i.folder_name.startsWith(f)).length;
+                    const folderNameUI = f.split('/').pop(); const count = trackerDataCache.filter(i => i.folder_name === f || (i.folder_name && i.folder_name.startsWith(f + '/'))).length;
                     container.innerHTML += `<div class="folder-card" onclick="openFolder('${f}')"><div class="folder-icon-box"><i class="fas fa-folder"></i></div><div class="folder-title">${folderNameUI} <span style="font-size:12px; color:var(--text-muted); display:block; font-weight:normal;">${count} Film</span></div><i class="fas fa-trash-alt" style="color:#ff3b30; padding:10px;" onclick="deleteFolder(event, '${f}')"></i></div>`;
                 });
 
-                let folderMovies = trackerDataCache.filter(i => i.folder_name === activeFolderName);
-                if(subs.length === 0 && folderMovies.length === 0) { container.innerHTML += `<p style="color:#8e8e93; text-align:center;">Folder kosong.</p>`; return; }
-                var displayedData = folderMovies;
+                // TAMPILKAN FILM KHUSUS DI FOLDER INI
+                displayedData = trackerDataCache.filter(i => {
+                    if (activeFolderName === "") return i.folder_name === null || i.folder_name === "";
+                    else return i.folder_name === activeFolderName;
+                });
+
+                if (subs.length === 0 && displayedData.length === 0) { 
+                    container.innerHTML += `<p style="color:#8e8e93; text-align:center;">Kosong.</p>`; return; 
+                }
             } else {
+                // TAMPILAN NORMAL NON-FOLDER
                 document.getElementById('sort-tracker').style.display = 'block';
                 document.getElementById('tracker-list-title').innerText = "Koleksi Film";
-                var displayedData = trackerDataCache.filter(item => currentFilter === 'all' || item.status === currentFilter);
+                displayedData = trackerDataCache.filter(item => currentFilter === 'all' || item.status === currentFilter);
+                if (displayedData.length === 0) { container.innerHTML = `<p style="color:#8e8e93;">Belum ada film di tab ini.</p>`; return; }
             }
 
-            let countWatched = 0, countWatchlist = 0, countFavorite = 0; 
-            trackerDataCache.forEach(item => { if(item.status === 'watched') countWatched++; else if(item.status === 'watchlist') countWatchlist++; else if(item.status === 'favorite') countFavorite++; });
-            document.getElementById('stat-watched').innerText = countWatched; document.getElementById('stat-watchlist').innerText = countWatchlist; document.getElementById('stat-favorite').innerText = countFavorite;
+            renderMovieList(displayedData, container, sortType);
+        }
 
-            let sortedData = [...displayedData]; const sortType = document.getElementById('sort-tracker').value;
+        function renderMovieList(displayedData, container, sortType) {
+            let sortedData = [...displayedData];
             if(sortType === 'newest') sortedData.sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
             else if(sortType === 'oldest') sortedData.sort((a,b) => new Date(a.created_at) - new Date(b.created_at));
             else if(sortType === 'az') sortedData.sort((a,b) => a.title.localeCompare(b.title));
@@ -714,12 +748,10 @@
             else if(sortType === 'rating_desc') sortedData.sort((a,b) => (b.user_rating || 0) - (a.user_rating || 0));
             else if(sortType === 'custom') sortedData.sort((a,b) => (b.custom_order || 0) - (a.custom_order || 0));
 
-            if (sortedData.length === 0 && currentFilter !== 'folders') { container.innerHTML = `<p style="color:#8e8e93;">Belum ada film di tab ini.</p>`; return; }
-
             sortedData.forEach(item => {
                 const div = document.createElement('div'); div.className = 'list-item'; div.dataset.id = item.tmdb_id;
                 const r = parseFloat(item.user_rating || 0).toFixed(1);
-                let statusHtml = ''; if(item.status === 'watched') statusHtml = `Selesai`; else if(item.status === 'favorite') statusHtml = `Favorit`; else statusHtml = `Nanti Saja`;
+                let statusHtml = ''; if(item.status === 'watched') statusHtml = `<i class="fas fa-check-circle"></i> Selesai`; else if(item.status === 'favorite') statusHtml = `<i class="fas fa-heart"></i> Favorit`; else statusHtml = `<i class="fas fa-clock"></i> Nanti`;
                 let statusColor = item.status === 'watched' ? '#34c759' : (item.status === 'favorite' ? '#ff2d55' : '#ff9500');
 
                 const encodedData = encodeURIComponent(JSON.stringify({ id: item.tmdb_id, title: item.title, poster_path: item.poster_path, media_type: item.media_type, runtime: item.runtime }));
@@ -731,7 +763,7 @@
                         <div style="font-size:12px; color:${statusColor};">${statusHtml} • ${item.runtime ? item.runtime + ' Mnt' : '...'}</div>
                         <div class="rating-pill" onclick="event.stopPropagation(); openRatingModal(${item.tmdb_id}, ${item.user_rating})"><i class="fas fa-star"></i> ${r}/10</div>
                     </div>
-                    ${sortType === 'custom' ? '<i class="fas fa-bars drag-handle" onclick="event.stopPropagation()"></i>' : `<i class="fas fa-trash-alt" style="color:#ff3b30; padding:10px; cursor:pointer;" onclick="event.stopPropagation(); showDeleteModal(${item.tmdb_id}, '${item.title.replace(/'/g, "\\'")}')"></i>`}
+                    ${sortType === 'custom' ? '<i class="fas fa-bars drag-handle" onclick="event.stopPropagation()"></i>' : `<i class="fas fa-trash-alt" style="color:#ff3b30; padding:10px; cursor:pointer;" onclick="event.stopPropagation(); deleteMovieViaConfirm(${item.tmdb_id}, '${item.title.replace(/'/g, "\\'")}')"></i>`}
                 `;
                 container.appendChild(div);
             });
@@ -742,9 +774,9 @@
                     handle: '.drag-handle', animation: 150, forceFallback: true, fallbackClass: "sortable-fallback",
                     onEnd: async function (evt) {
                         const movedEl = evt.item; const prevEl = movedEl.previousElementSibling; const nextEl = movedEl.nextElementSibling; let newOrder = Date.now();
-                        if(prevEl && nextEl) { const pOrder = parseFloat(trackerDataCache.find(i=>i.tmdb_id == prevEl.dataset.id).custom_order || 0); const nOrder = parseFloat(trackerDataCache.find(i=>i.tmdb_id == nextEl.dataset.id).custom_order || 0); newOrder = (pOrder + nOrder) / 2; } 
-                        else if(prevEl) { newOrder = parseFloat(trackerDataCache.find(i=>i.tmdb_id == prevEl.dataset.id).custom_order || 0) - 10; } 
-                        else if(nextEl) { newOrder = parseFloat(trackerDataCache.find(i=>i.tmdb_id == nextEl.dataset.id).custom_order || 0) + 10; }
+                        if(prevEl && nextEl && prevEl.dataset.id && nextEl.dataset.id) { const pOrder = parseFloat(trackerDataCache.find(i=>i.tmdb_id == prevEl.dataset.id).custom_order || 0); const nOrder = parseFloat(trackerDataCache.find(i=>i.tmdb_id == nextEl.dataset.id).custom_order || 0); newOrder = (pOrder + nOrder) / 2; } 
+                        else if(prevEl && prevEl.dataset.id) { newOrder = parseFloat(trackerDataCache.find(i=>i.tmdb_id == prevEl.dataset.id).custom_order || 0) - 10; } 
+                        else if(nextEl && nextEl.dataset.id) { newOrder = parseFloat(trackerDataCache.find(i=>i.tmdb_id == nextEl.dataset.id).custom_order || 0) + 10; }
                         trackerDataCache.find(i=>i.tmdb_id == movedEl.dataset.id).custom_order = newOrder;
                         const dbId = trackerDataCache.find(i=>i.tmdb_id == movedEl.dataset.id).id; window.supabaseClient.from('ct_watch_history').update({ custom_order: newOrder }).eq('id', dbId);
                     }
@@ -795,7 +827,7 @@
         }
 
         async function openFriendPanel(friendData) {
-            activeFriendProfile = friendData;
+            openLayer('friend_panel'); activeFriendProfile = friendData;
             document.getElementById('friend-panel-username').innerText = "@" + friendData.username;
             document.getElementById('friend-panel').style.transform = 'translateX(0)';
             document.getElementById('friend-stat-watched').innerText = "0"; document.getElementById('friend-stat-watchlist').innerText = "0"; document.getElementById('friend-stat-favorite').innerText = "0";
@@ -811,17 +843,25 @@
         }
         function closeFriendPanelVisual() { document.getElementById('friend-panel').style.transform = 'translateX(100%)'; }
 
-        function setFriendFilter(filterType, btnElement) { friendFilter = filterType; document.querySelectorAll('#friend-panel .segmented-btn').forEach(btn => btn.classList.remove('active')); if(btnElement) btnElement.classList.add('active'); renderFriendTrackerData(); }
-        function openFriendFolder(fPath) { friendActiveFolder = fPath; friendFilter = 'folder_view'; renderFriendTrackerData(); }
-        function goBackToFriendFolder() {
-            let parts = friendActiveFolder.split('/'); parts.pop(); friendActiveFolder = parts.join('/');
-            if(friendActiveFolder === "") { friendFilter = 'folders'; }
-            renderFriendTrackerData();
+        function setFriendFilter(filterType, btnElement) { 
+            friendFilter = filterType; document.querySelectorAll('#friend-panel .segmented-btn').forEach(btn => btn.classList.remove('active')); 
+            if(btnElement) btnElement.classList.add('active'); 
+            if(filterType !== 'folders' && filterType !== 'folder_view') friendActiveFolder = '';
+            renderFriendTrackerData(); 
         }
+
+        function openFriendFolder(fPath) { openLayer('fdir_' + fPath); friendActiveFolder = fPath; friendFilter = 'folder_view'; renderFriendTrackerData(); }
+        function goBackToFriendFolder() { closeLayerProgrammatically(); }
 
         function renderFriendTrackerData() {
             const container = document.getElementById('friend-tracker-content'); container.innerHTML = '';
             
+            let countWatched = 0, countWatchlist = 0, countFavorite = 0; 
+            friendTrackerCache.forEach(i => { if(i.status === 'watched') countWatched++; else if(i.status === 'watchlist') countWatchlist++; else if(i.status === 'favorite') countFavorite++; });
+            document.getElementById('friend-stat-watched').innerText = countWatched; document.getElementById('friend-stat-watchlist').innerText = countWatchlist; document.getElementById('friend-stat-favorite').innerText = countFavorite;
+            
+            let displayedData = [];
+
             if(friendFilter === 'folders') {
                 document.getElementById('sort-friend-tracker').style.display = 'block';
                 if(friendActiveFolder === "") { document.getElementById('friend-list-title').innerText = "Daftar Folder Teman"; } 
@@ -829,30 +869,29 @@
 
                 const subs = getDirectSubfolders(friendActiveFolder, friendFolders);
                 subs.forEach(f => {
-                    const folderNameUI = f.split('/').pop(); const count = friendTrackerCache.filter(i => i.folder_name && i.folder_name.startsWith(f)).length;
+                    const folderNameUI = f.split('/').pop(); const count = friendTrackerCache.filter(i => i.folder_name === f || (i.folder_name && i.folder_name.startsWith(f + '/'))).length;
                     container.innerHTML += `<div class="folder-card" onclick="openFriendFolder('${f}')"><div class="folder-icon-box"><i class="fas fa-folder"></i></div><div class="folder-title">${folderNameUI} <span style="font-size:12px; color:var(--text-muted); display:block; font-weight:normal;">${count} Film</span></div><i class="fas fa-chevron-right" style="color:var(--text-muted);"></i></div>`;
                 });
 
-                let folderMovies = friendTrackerCache.filter(i => i.folder_name === friendActiveFolder);
-                if(subs.length === 0 && folderMovies.length === 0) { container.innerHTML += `<p style="color:#8e8e93; text-align:center;">Folder kosong.</p>`; return; }
-                var displayedData = folderMovies;
+                displayedData = friendTrackerCache.filter(i => {
+                    if (friendActiveFolder === "") return i.folder_name === null || i.folder_name === "";
+                    else return i.folder_name === friendActiveFolder;
+                });
+
+                if(subs.length === 0 && displayedData.length === 0) { container.innerHTML += `<p style="color:#8e8e93; text-align:center;">Kosong.</p>`; return; }
             } else {
                 document.getElementById('sort-friend-tracker').style.display = 'block';
                 document.getElementById('friend-list-title').innerText = "Koleksi Teman";
-                var displayedData = friendTrackerCache.filter(item => friendFilter === 'all' || item.status === friendFilter);
+                displayedData = friendTrackerCache.filter(item => friendFilter === 'all' || item.status === friendFilter);
+                if(displayedData.length === 0) { container.innerHTML = "<p>Belum ada film di tab ini.</p>"; return; }
             }
 
-            let countWatched = 0, countWatchlist = 0, countFavorite = 0; 
-            friendTrackerCache.forEach(i => { if(i.status === 'watched') countWatched++; else if(i.status === 'watchlist') countWatchlist++; else if(i.status === 'favorite') countFavorite++; });
-            document.getElementById('friend-stat-watched').innerText = countWatched; document.getElementById('friend-stat-watchlist').innerText = countWatchlist; document.getElementById('friend-stat-favorite').innerText = countFavorite;
-            
             let sortedData = [...displayedData]; const sortType = document.getElementById('sort-friend-tracker').value;
             if(sortType === 'newest') sortedData.sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
             else if(sortType === 'az') sortedData.sort((a,b) => a.title.localeCompare(b.title));
             else if(sortType === 'duration_desc') sortedData.sort((a,b) => (b.runtime || 0) - (a.runtime || 0));
             else if(sortType === 'rating_desc') sortedData.sort((a,b) => (b.user_rating || 0) - (a.user_rating || 0));
-            if(sortedData.length === 0 && friendFilter !== 'folders') return container.innerHTML = "<p>Belum ada film di tab ini.</p>";
-
+            
             sortedData.forEach(item => {
                 const div = document.createElement('div'); div.className = 'list-item';
                 const r = parseFloat(item.user_rating || 0).toFixed(1);
