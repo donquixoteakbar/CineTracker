@@ -18,10 +18,9 @@
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body { font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif; margin: 0; background-color: var(--bg-color); color: var(--text-main); overflow: hidden; width: 100vw; height: 100vh; }
 
-        /* --- Animasi Logo (Outline Murni Eksternal) --- */
+        /* --- Animasi Logo Senter --- */
         .app-header { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; padding: 5px 0; }
         .ticket-icon { color: var(--gold); font-size: 24px; -webkit-text-stroke: 1px black; transform: rotate(-15deg); filter: drop-shadow(1px 2px 1px rgba(0,0,0,0.2)); }
-        
         .logo-wrapper { position: relative; display: inline-block; font-size: 24px; font-weight: 900; letter-spacing: -0.5px; }
         .logo-wrapper::before { content: attr(data-text); position: absolute; left: 0; top: 0; -webkit-text-stroke: 4px black; color: transparent; z-index: 1; }
         .animated-logo-text { position: relative; z-index: 2; background: linear-gradient(110deg, #d4af37 40%, #ffffff 50%, #d4af37 60%); background-size: 300% auto; color: transparent; -webkit-background-clip: text; background-clip: text; animation: flashlight 6s ease-in-out infinite; }
@@ -42,24 +41,31 @@
         .movie-scroll { display: flex; overflow-x: auto; gap: 15px; padding-bottom: 10px; scroll-snap-type: x mandatory; }
         .movie-scroll::-webkit-scrollbar { display: none; }
         .movie-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: 15px; padding-bottom: 20px; }
-        .movie-card { flex: 0 0 120px; scroll-snap-align: start; cursor: pointer; }
+        
+        /* Modifikasi Movie Card untuk menampung Badge */
+        .movie-card { flex: 0 0 120px; scroll-snap-align: start; cursor: pointer; position: relative; }
         .movie-card img { width: 100%; aspect-ratio: 2/3; border-radius: 12px; object-fit: cover; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
         .movie-card .title { font-size: 13px; font-weight: 600; margin-top: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        
+        /* BARU: Indikator/Badge pada Poster Film */
+        .card-badge { position: absolute; top: 6px; right: 6px; background: rgba(0,0,0,0.7); border-radius: 50%; width: 22px; height: 22px; display: flex; justify-content: center; align-items: center; font-size: 11px; z-index: 5; backdrop-filter: blur(4px); box-shadow: 0 2px 5px rgba(0,0,0,0.3); }
+        .card-badge.watched { color: #34c759; }
+        .card-badge.favorite { color: #ff2d55; }
+        .card-badge.watchlist { color: #ff9500; }
 
-        /* --- Tracker UI (DENGAN TOMBOL FAVORIT & FOLDER) --- */
-        .segmented-control { display: flex; background: #e3e3e8; border-radius: 8px; padding: 2px; margin-bottom: 15px; overflow-x: auto; scrollbar-width: none; }
+        /* --- Tracker UI --- */
+        .segmented-control { display: flex; background: #e3e3e8; border-radius: 8px; padding: 2px; margin-bottom: 15px; overflow-x: auto; scrollbar-width: none;}
         .segmented-control::-webkit-scrollbar { display: none; }
         .segmented-btn { flex: 1; text-align: center; padding: 8px 4px; font-size: 12px; font-weight: 600; color: var(--text-main); border-radius: 6px; cursor: pointer; transition: 0.2s; white-space: nowrap; min-width: 55px;}
         .segmented-btn.active { background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.12); }
         
-        .sort-dropdown { background: #e3e3e8; color: var(--text-main); border: none; padding: 6px 12px; border-radius: 8px; font-size: 13px; font-weight: 600; outline: none; }
+        .sort-dropdown { background: #e3e3e8; color: var(--text-main); border: none; padding: 6px 12px; border-radius: 8px; font-size: 13px; font-weight: 600; outline: none; max-width: 150px; }
         .list-item { display:flex; align-items:center; margin-bottom:15px; border-bottom:1px solid #f2f2f7; padding-bottom:10px; background:white; border-radius: 12px; padding: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.03); transition: opacity 0.3s; cursor: pointer; }
         .rating-pill { background: #f2f2f7; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 700; display: inline-flex; align-items: center; gap: 4px; cursor: pointer; margin-top:6px;}
         .rating-pill i { color: var(--gold); }
         .drag-handle { padding: 10px; color: #c7c7cc; cursor: grab; font-size: 20px; }
         .drag-handle:active { cursor: grabbing; color: var(--accent); }
 
-        /* --- UI Folder --- */
         .folder-card { background: white; border-radius: 12px; padding: 15px; margin-bottom: 15px; display: flex; align-items: center; box-shadow: 0 2px 8px rgba(0,0,0,0.03); cursor: pointer; }
         .folder-icon-box { width: 45px; height: 45px; background: #e3e3e8; border-radius: 10px; display: flex; justify-content: center; align-items: center; color: var(--accent); margin-right: 15px; font-size: 20px; }
         .folder-title { flex: 1; font-weight: 700; font-size: 16px; }
@@ -81,6 +87,11 @@
         .avatar-edit-btn { position: absolute; bottom: 0; right: 0; background: var(--accent); color: white; width: 32px; height: 32px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 14px; border: 3px solid white; cursor: pointer; }
         .watchtime-box { background: #f2f2f7; border-radius: 12px; padding: 15px; margin-bottom: 20px; text-align: center; }
 
+        /* User List (Teman) */
+        .friend-list-item { display:flex; align-items:center; padding:10px 0; border-bottom:1px solid #f2f2f7; cursor: pointer; }
+        .friend-list-item img { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; margin-right: 12px; border: 1px solid #e3e3e8; }
+        .friend-list-item .name { font-weight: 600; font-size: 15px; flex: 1; }
+
         /* --- Bottom Sheet --- */
         .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); opacity: 0; visibility: hidden; transition: opacity 0.3s; z-index: 3000; }
         .overlay.active { opacity: 1; visibility: visible; }
@@ -97,13 +108,13 @@
         .sheet-tag { background: #f2f2f7; color: var(--text-main); font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: 12px; }
         .sheet-overview { font-size: 13px; color: #3a3a3c; line-height: 1.5; text-align: justify; margin-bottom: 15px; max-height: 110px; overflow-y: auto; padding-right: 5px; }
         
-        /* --- Modal Potong Foto --- */
+        /* --- Modal Potong Foto & Search Friend --- */
         #crop-modal { position: fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.9); z-index:5000; display:none; flex-direction:column; }
         .crop-container { flex:1; width:100%; display: flex; justify-content: center; align-items: center; overflow:hidden; }
         .crop-container img { max-width: 100%; max-height: 80vh; }
         .crop-controls { padding: 20px; display:flex; gap:15px; background:#1c1c1e; }
         
-        /* --- Custom Modals untuk APK --- */
+        /* --- Custom Modals APK --- */
         .custom-modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); opacity: 0; visibility: hidden; transition: 0.3s; z-index: 6000; display:flex; justify-content:center; align-items:center; }
         .custom-modal-overlay.active { opacity: 1; visibility: visible; }
         .custom-modal { background: var(--surface-color); width: 80%; max-width: 320px; border-radius: 14px; text-align: center; padding: 20px 20px 0 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); transform: scale(0.95); transition: 0.3s; }
@@ -122,39 +133,48 @@
 </head>
 <body>
 
-    <!-- Toast UI -->
     <div id="ios-toast" class="toast"><i class="fas fa-check-circle" style="color:#34c759; font-size:18px;"></i><span id="toast-message">Berhasil</span></div>
 
-    <!-- MODAL HAPUS -->
+    <!-- MODAL CUSTOM UMUM -->
     <div class="custom-modal-overlay" id="delete-modal-overlay">
         <div class="custom-modal">
             <div class="custom-modal-title">Hapus Film?</div>
             <div class="custom-modal-desc" id="delete-modal-desc">Yakin ingin menghapus film ini dari daftarmu?</div>
-            <div class="custom-modal-actions">
-                <button class="custom-modal-btn" onclick="closeLayerProgrammatically()">Batal</button>
-                <button class="custom-modal-btn danger" onclick="executeDeleteMovie()">Hapus</button>
-            </div>
+            <div class="custom-modal-actions"><button class="custom-modal-btn" onclick="closeLayerProgrammatically()">Batal</button><button class="custom-modal-btn danger" onclick="executeDeleteMovie()">Hapus</button></div>
         </div>
     </div>
 
-    <!-- Modal Potong Foto -->
+    <div class="custom-modal-overlay" id="exit-modal-overlay">
+        <div class="custom-modal">
+            <div class="custom-modal-title">Keluar Aplikasi?</div>
+            <div class="custom-modal-desc">Apakah kamu yakin ingin keluar dari CineTracker?</div>
+            <div class="custom-modal-actions"><button class="custom-modal-btn" onclick="closeExitModal()">Tidak</button><button class="custom-modal-btn danger" onclick="executeExitApp()">Ya, Keluar</button></div>
+        </div>
+    </div>
+    
+    <!-- Modal Pencarian Teman -->
+    <div class="custom-modal-overlay" id="search-friend-modal">
+        <div class="custom-modal">
+            <div class="custom-modal-title">Cari Akun Teman</div>
+            <div class="custom-modal-desc" style="margin-bottom:15px;">
+                <input type="text" id="friend-search-input" class="auth-input" style="margin-bottom:0;" placeholder="Ketik username teman...">
+                <p id="friend-search-msg" style="font-size: 11px; color: #ff3b30; margin: 5px 0 0 0; text-align:left;"></p>
+            </div>
+            <div class="custom-modal-actions"><button class="custom-modal-btn" onclick="closeLayerProgrammatically()">Batal</button><button class="custom-modal-btn" style="font-weight:700;" onclick="executeSearchFriend()">Cari</button></div>
+        </div>
+    </div>
+
     <div id="crop-modal">
         <div style="text-align: center; color: white; padding-top: env(safe-area-inset-top, 20px); font-size: 14px;">Cubit untuk Zoom & Geser</div>
         <div class="crop-container"><img id="crop-image" src=""></div>
-        <div class="crop-controls">
-            <button class="btn-secondary" style="background:#3a3a3c; color:white; flex:1;" onclick="closeLayerProgrammatically()">Batal</button>
-            <button class="btn-primary" style="flex:1; margin-bottom:0;" onclick="applyCrop()">Selesai</button>
-        </div>
+        <div class="crop-controls"><button class="btn-secondary" style="background:#3a3a3c; color:white; flex:1;" onclick="closeLayerProgrammatically()">Batal</button><button class="btn-primary" style="flex:1; margin-bottom:0;" onclick="applyCrop()">Selesai</button></div>
     </div>
 
-    <!-- Modal Rating -->
     <div class="overlay" id="rating-overlay" onclick="closeLayerProgrammatically()"></div>
     <div class="bottom-sheet" id="rating-sheet" style="z-index: 4000; text-align:center;">
         <div class="sheet-handle"></div>
         <h3 style="margin-top:0;">Beri Nilai Film</h3>
-        <div style="font-size:40px; font-weight:900; color:var(--gold); margin:15px 0;">
-            <i class="fas fa-star" style="font-size:30px; margin-right:5px;"></i><span id="rating-display">0.0</span>
-        </div>
+        <div style="font-size:40px; font-weight:900; color:var(--gold); margin:15px 0;"><i class="fas fa-star" style="font-size:30px; margin-right:5px;"></i><span id="rating-display">0.0</span></div>
         <div style="display:flex; align-items:center; gap: 10px; margin-bottom: 25px;">
             <button onclick="adjustRating(-0.1)" style="width:40px; height:40px; border-radius:50%; border:none; background:#e3e3e8; font-size:24px; font-weight:bold; color:var(--text-main);">-</button>
             <input type="range" id="rating-slider" min="0" max="10" step="0.1" value="0.0" style="flex:1; accent-color:var(--gold);" oninput="updateRatingDisplay(this.value)">
@@ -164,24 +184,16 @@
     </div>
 
     <div class="page-container">
+        
         <!-- ================= EXPLORE ================= -->
         <div id="page-home" class="page active">
-            <div class="app-header">
-                <i class="fas fa-ticket-alt ticket-icon"></i>
-                <span class="logo-wrapper" data-text="CineTracker"><span class="animated-logo-text">CineTracker</span></span>
-            </div>
+            <div class="app-header"><i class="fas fa-ticket-alt ticket-icon"></i><span class="logo-wrapper" data-text="CineTracker"><span class="animated-logo-text">CineTracker</span></span></div>
             <h1 class="page-title">Explore</h1>
-            
-            <form class="search-form" id="search-form">
-                <i class="fas fa-search"></i>
-                <input type="text" id="search-input" placeholder="Ketik judul film...">
-            </form>
-
+            <form class="search-form" id="search-form"><i class="fas fa-search"></i><input type="text" id="search-input" placeholder="Ketik judul film..."></form>
             <div id="search-area" style="display: none;">
-                <div class="section-title"><span id="search-title">Hasil</span><span class="close-search" id="close-search" onclick="closeLayerProgrammatically()" style="display:block;">Batal</span></div>
+                <div class="section-title"><span id="search-title">Hasil</span><span class="close-search" id="close-search" onclick="closeSearch()" style="display:block;">Batal</span></div>
                 <div class="movie-grid" id="search-container"></div>
             </div>
-            
             <div id="explore-area">
                 <div class="section-title">Trending Sekarang</div><div class="movie-scroll" id="trending-container"><p style="color:gray;">Memuat...</p></div>
                 <div class="section-title">Marvel Studios</div><div class="movie-scroll" id="marvel-container"><p style="color:gray;">Memuat...</p></div>
@@ -191,13 +203,8 @@
 
         <!-- ================= TRACKER ================= -->
         <div id="page-tracker" class="page">
-            <div class="app-header">
-                <i class="fas fa-ticket-alt ticket-icon"></i>
-                <span class="logo-wrapper" data-text="CineTracker"><span class="animated-logo-text">CineTracker</span></span>
-            </div>
+            <div class="app-header"><i class="fas fa-ticket-alt ticket-icon"></i><span class="logo-wrapper" data-text="CineTracker"><span class="animated-logo-text">CineTracker</span></span></div>
             <h1 class="page-title">Tracker</h1>
-            
-            <!-- KEMBALINYA TOMBOL FOLDER DAN FAVORIT -->
             <div class="segmented-control">
                 <div class="segmented-btn active" onclick="setFilter('all', this)">Semua</div>
                 <div class="segmented-btn" onclick="setFilter('favorite', this)"><i class="fas fa-heart" style="color:#ff2d55;"></i></div>
@@ -205,7 +212,6 @@
                 <div class="segmented-btn" onclick="setFilter('watchlist', this)">Nanti</div>
                 <div class="segmented-btn" onclick="setFilter('folders', this)"><i class="fas fa-folder" style="color:var(--accent);"></i></div>
             </div>
-
             <div id="tracker-header-area" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; padding: 0 5px;">
                 <h3 id="tracker-list-title" style="margin:0; font-size: 18px;">Koleksi Film</h3>
                 <select id="sort-tracker" class="sort-dropdown" onchange="renderTrackerData()">
@@ -217,18 +223,12 @@
                     <option value="za">Z - A (Judul)</option>
                 </select>
             </div>
-
-            <div id="tracker-content" style="padding-bottom: 20px;">
-                <div class="auth-container" style="text-align:center;"><p style="color:#8e8e93;">Menunggu database...</p></div>
-            </div>
+            <div id="tracker-content" style="padding-bottom: 20px;"><div class="auth-container" style="text-align:center;"><p style="color:#8e8e93;">Menunggu database...</p></div></div>
         </div>
 
         <!-- ================= PROFILE ================= -->
         <div id="page-profile" class="page">
-            <div class="app-header">
-                <i class="fas fa-ticket-alt ticket-icon"></i>
-                <span class="logo-wrapper" data-text="CineTracker"><span class="animated-logo-text">CineTracker</span></span>
-            </div>
+            <div class="app-header"><i class="fas fa-ticket-alt ticket-icon"></i><span class="logo-wrapper" data-text="CineTracker"><span class="animated-logo-text">CineTracker</span></span></div>
             <h1 class="page-title">Profile</h1>
             
             <div id="auth-section" class="auth-container">
@@ -246,7 +246,6 @@
                     <div class="avatar-edit-btn"><i class="fas fa-camera"></i></div>
                 </div>
                 <input type="file" id="avatar-upload" accept="image/*" style="display:none;" onchange="initCrop(event)">
-                
                 <h3 id="display-username" style="margin-top:0; font-size: 24px;">@username</h3>
                 
                 <div style="display:flex; justify-content:space-around; margin: 20px 0 10px 0; padding: 15px 0; border-top: 1px solid #e3e3e8;">
@@ -255,21 +254,18 @@
                     <div><div style="font-size:24px; font-weight:bold; color:#ff9500;" id="stat-watchlist">0</div><div style="font-size:12px; color:var(--text-muted); font-weight:600;">Nanti</div></div>
                 </div>
 
-                <div class="watchtime-box">
-                    <div class="watchtime-title">Total Waktu Dihabiskan Menonton</div>
-                    <div class="watchtime-value" id="stat-watchtime">Menghitung...</div>
-                </div>
-
+                <div class="watchtime-box"><div class="watchtime-title">Total Waktu Dihabiskan Menonton</div><div class="watchtime-value" id="stat-watchtime">Menghitung...</div></div>
                 <button class="btn-secondary" style="color:red; margin-bottom: 25px;" onclick="handleLogout()">Logout</button>
                 
-                <div style="text-align: left;">
-                    <h4 style="margin-top: 0; font-size: 16px;">Cari Profil Teman</h4>
-                    <div class="search-form" style="margin-bottom: 10px;">
-                        <i class="fas fa-at"></i>
-                        <input type="text" id="friend-search-input" placeholder="Ketik username teman...">
-                        <button onclick="searchFriend()" style="background: none; border: none; color: var(--accent); font-weight: 600; font-size: 16px; cursor:pointer;">Cari</button>
+                <!-- DAFTAR TEMAN DI PROFIL -->
+                <div style="text-align: left; padding-top: 15px; border-top: 1px solid #e3e3e8;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <h4 style="margin: 0; font-size: 16px;">Daftar Teman</h4>
+                        <button onclick="openSearchFriendModal()" style="background: none; border: none; color: var(--accent); font-weight: 600; font-size: 14px; cursor:pointer;"><i class="fas fa-plus"></i> Tambah</button>
                     </div>
-                    <p id="friend-search-msg" style="font-size: 12px; color: #ff3b30; margin: 0;"></p>
+                    <div id="friend-list-container">
+                        <p style="font-size: 13px; color: var(--text-muted);">Belum ada teman yang diikuti.</p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -282,7 +278,7 @@
         <div class="nav-item" onclick="switchPage('profile', this)"><i class="fas fa-user"></i><span>Profile</span></div>
     </div>
 
-    <!-- ================= BOTTOM SHEET FILM (Dengan Dropdown Folder) ================= -->
+    <!-- ================= BOTTOM SHEET FILM ================= -->
     <div class="overlay" id="sheet-overlay" onclick="closeLayerProgrammatically()"></div>
     <div class="bottom-sheet" id="movie-sheet">
         <div class="sheet-handle"></div>
@@ -312,9 +308,13 @@
 
     <!-- ================= PANEL PROFIL TEMAN ================= -->
     <div id="friend-panel" style="position:fixed; top:0; left:0; width:100%; height:100%; background:var(--bg-color); z-index:2500; transform:translateX(100%); transition:transform 0.4s cubic-bezier(0.36, 0.66, 0.04, 1); overflow-y:auto; padding-bottom: 40px;">
-        <div style="background: white; padding: 20px; padding-top: max(20px, env(safe-area-inset-top)); display: flex; align-items: center; border-bottom: 1px solid #e3e3e8; position: sticky; top: 0; z-index: 10;">
-            <i class="fas fa-chevron-left" onclick="closeLayerProgrammatically()" style="font-size: 20px; color: var(--accent); padding-right: 15px; cursor: pointer;"></i>
-            <h2 style="margin: 0; font-size: 20px;">Profil Teman</h2>
+        <div style="background: white; padding: 20px; padding-top: max(20px, env(safe-area-inset-top)); display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e3e3e8; position: sticky; top: 0; z-index: 10;">
+            <div style="display:flex; align-items:center;">
+                <i class="fas fa-chevron-left" onclick="closeLayerProgrammatically()" style="font-size: 20px; color: var(--accent); padding-right: 15px; cursor: pointer;"></i>
+                <h2 style="margin: 0; font-size: 20px;">Profil Teman</h2>
+            </div>
+            <!-- Tombol Ikuti Teman -->
+            <button id="btn-toggle-friend" class="btn-primary" style="margin:0; padding:6px 12px; width:auto; font-size:13px; border-radius:20px;" onclick="toggleFriend()"><i class="fas fa-user-plus"></i> Ikuti</button>
         </div>
         
         <div class="auth-container" style="text-align:center; margin: 20px;">
@@ -324,7 +324,7 @@
             <div style="display:flex; justify-content:space-around; margin-top: 15px; padding-top: 15px; border-top: 1px solid #e3e3e8;">
                 <div><div style="font-size:20px; font-weight:bold; color:var(--accent);" id="friend-stat-watched">0</div><div style="font-size:11px; color:var(--text-muted);">Selesai</div></div>
                 <div><div style="font-size:20px; font-weight:bold; color:#ff2d55;" id="friend-stat-favorite">0</div><div style="font-size:11px; color:var(--text-muted);">Favorit</div></div>
-                <div><div style="font-size:20px; font-weight:bold; color:#ff9500;" id="friend-stat-watchlist">0</div><div style="font-size:11px; color:var(--text-muted);">Nanti Saja</div></div>
+                <div><div style="font-size:20px; font-weight:bold; color:#ff9500;" id="friend-stat-watchlist">0</div><div style="font-size:11px; color:var(--text-muted);">Nanti</div></div>
             </div>
             <div class="watchtime-box" style="margin-top: 15px; margin-bottom: 0;">
                 <div class="watchtime-title">Total Waktu Menonton</div>
@@ -359,77 +359,83 @@
 
     <!-- ================= LOGIKA APLIKASI ================= -->
     <script>
-        // --- 1. ROUTING HASH (ANTI KELUAR APLIKASI UNTUK APK) ---
-        let modalStack = [];
-        let isScriptHash = false;
-
-        function openLayer(layerId) {
-            isScriptHash = true;
-            modalStack.push(layerId);
-            window.location.hash = "view_" + Date.now(); 
-        }
-
+        // --- 1. HISTORY NATIVE & ROUTING ---
+        let modalStack = []; let isScriptHash = false;
+        function openLayer(layerId) { isScriptHash = true; modalStack.push(layerId); window.location.hash = "view_" + Date.now(); }
         window.addEventListener('hashchange', function() {
             if (isScriptHash) { isScriptHash = false; return; }
-            if (modalStack.length > 0) {
-                const topLayer = modalStack.pop();
-                executeCloseVisual(topLayer);
-            } 
+            if (modalStack.length > 0) { const topLayer = modalStack.pop(); executeCloseVisual(topLayer); } 
+            else { showExitModal(); history.pushState({ page: 'home' }, ''); }
         });
-
-        function closeLayerProgrammatically() {
-            if (modalStack.length > 0) history.back();
-        }
-
+        function closeLayerProgrammatically() { if (modalStack.length > 0) history.back(); }
         function executeCloseVisual(layerId) {
             if(layerId === 'crop') { document.getElementById('crop-modal').style.display = 'none'; if(cropper) cropper.destroy(); }
             else if(layerId === 'sheet') { document.getElementById('sheet-overlay').classList.remove('active'); document.getElementById('movie-sheet').classList.remove('active'); }
             else if(layerId === 'rating') { document.getElementById('rating-overlay').classList.remove('active'); document.getElementById('rating-sheet').classList.remove('active'); activeRatingId = null; }
             else if(layerId === 'delete') { document.getElementById('delete-modal-overlay').classList.remove('active'); pendingDeleteId = null; }
-            else if(layerId === 'search') { 
-                isSearchOpen = false; document.getElementById('search-input').value = ''; document.getElementById('explore-area').style.display = 'block'; 
-                document.getElementById('search-area').style.display = 'none'; document.getElementById('search-container').innerHTML = ''; 
-            }
+            else if(layerId === 'search') { isSearchOpen = false; document.getElementById('search-input').value = ''; document.getElementById('explore-area').style.display = 'block'; document.getElementById('search-area').style.display = 'none'; document.getElementById('search-container').innerHTML = ''; }
             else if(layerId === 'friend_panel') { document.getElementById('friend-panel').style.transform = 'translateX(100%)'; }
-            else if(layerId === 'folder_view') { closeFolderViewVisual(); }
-            else if(layerId === 'friend_folder_view') { closeFriendFolderViewVisual(); }
+            else if(layerId === 'folder_view') { activeFolderName = ''; currentFilter = 'folders'; renderTrackerData(); }
+            else if(layerId === 'friend_folder_view') { friendActiveFolder = ''; friendFilter = 'folders'; renderFriendTrackerData(); }
+            else if(layerId === 'search_friend') { document.getElementById('search-friend-modal').classList.remove('active'); }
         }
 
         // --- 2. UTILITAS ---
         function showToast(message, type = "success") {
             const toast = document.getElementById('ios-toast'); document.getElementById('toast-message').innerText = message;
             const icon = toast.querySelector('i');
-            if(type === "error") { icon.className = "fas fa-exclamation-circle"; icon.style.color = "#ff3b30"; } 
-            else { icon.className = "fas fa-check-circle"; icon.style.color = "#34c759"; }
+            if(type === "error") { icon.className = "fas fa-exclamation-circle"; icon.style.color = "#ff3b30"; } else { icon.className = "fas fa-check-circle"; icon.style.color = "#34c759"; }
             toast.classList.add('show'); setTimeout(() => { toast.classList.remove('show'); }, 3000); 
         }
 
         const TMDB_API_KEY = '424381b50b56209d2883c00c9eb6b627'; const BASE_URL = 'https://api.themoviedb.org/3'; const IMG_URL = 'https://image.tmdb.org/t/p/w500';
 
-        let currentUser = null; let userFolders = []; let friendFolders = [];
-        let trackerDataCache = []; let friendTrackerCache = [];
+        let currentUser = null; let userFolders = []; let friendFolders = []; let myFriends = []; let activeFriendProfile = null;
+        let selectedMovie = null; let trackerDataCache = []; let friendTrackerCache = [];
         let currentFilter = 'all'; let activeFolderName = ''; let friendFilter = 'all'; let friendActiveFolder = '';
-        let activeRatingId = null; let cropper = null; let sortableInstance = null; let pendingDeleteId = null; let pendingDeleteTitle = ""; let isSearchOpen = false;
+        let activeRatingId = null; let cropper = null; let sortableInstance = null; let pendingDeleteId = null; let isSearchOpen = false;
 
         // --- 3. NAVIGASI TAB ---
         const pagesArray = ['home', 'tracker', 'profile']; let currentPage = 'home';
-        function switchPage(targetPageId, navElement) {
-            if (currentPage === targetPageId) return;
-            const inputs = ['username', 'password', 'friend-search-input'];
-            inputs.forEach(id => document.getElementById(id).setAttribute('tabindex', targetPageId === 'profile' ? '0' : '-1'));
+        function switchPageVisual(targetPageId, navElement) {
+            const inputs = ['username', 'password', 'friend-search-input']; inputs.forEach(id => document.getElementById(id).setAttribute('tabindex', targetPageId === 'profile' ? '0' : '-1'));
             document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active')); navElement.classList.add('active');
-            
             const currentEl = document.getElementById(`page-${currentPage}`); const targetEl = document.getElementById(`page-${targetPageId}`);
             const curIdx = pagesArray.indexOf(currentPage); const tgtIdx = pagesArray.indexOf(targetPageId);
             currentEl.classList.remove('active', 'prev'); targetEl.classList.remove('active', 'prev');
             if (tgtIdx > curIdx) { targetEl.style.transform = 'translateX(100%)'; targetEl.classList.add('active'); currentEl.classList.add('prev'); } 
             else { targetEl.style.transform = 'translateX(-30%)'; targetEl.classList.add('active'); currentEl.style.transform = 'translateX(100%)'; }
             void targetEl.offsetWidth; setTimeout(() => { targetEl.style.transform = ''; currentEl.style.transform = ''; if(tgtIdx < curIdx) currentEl.classList.remove('active'); }, 50);
-            
-            currentPage = targetPageId; if(currentPage === 'tracker' && window.supabaseClient) fetchAndRenderTracker();
+            currentPage = targetPageId; 
+            if(currentPage === 'tracker' && window.supabaseClient) fetchAndRenderTracker();
+            if(currentPage === 'home') updateAllBadges();
+        }
+        function switchPage(targetPageId, navElement) {
+            if (currentPage === targetPageId) return;
+            if(isSearchOpen) closeLayerProgrammatically();
+            switchPageVisual(targetPageId, navElement);
         }
 
-        // --- 4. FETCH TMDB & SEARCH ---
+        // --- MENDAPATKAN BADGE FILM (Hijau/Merah/Oranye) ---
+        function getMovieBadge(tmdbId) {
+            const item = trackerDataCache.find(i => i.tmdb_id == tmdbId);
+            if(!item) return '';
+            if(item.status === 'favorite') return `<div class="card-badge favorite"><i class="fas fa-heart"></i></div>`;
+            if(item.status === 'watched') return `<div class="card-badge watched"><i class="fas fa-check"></i></div>`;
+            return `<div class="card-badge watchlist"><i class="fas fa-clock"></i></div>`;
+        }
+
+        function updateAllBadges() {
+            document.querySelectorAll('.movie-card').forEach(card => {
+                const data = JSON.parse(decodeURIComponent(card.dataset.encoded));
+                const existingBadge = card.querySelector('.card-badge');
+                if(existingBadge) existingBadge.remove();
+                const badgeHtml = getMovieBadge(data.id);
+                if(badgeHtml) card.insertAdjacentHTML('beforeend', badgeHtml);
+            });
+        }
+
+        // --- 4. FETCH TMDB ---
         async function fetchMovies(endpoint, containerId) {
             try {
                 const res = await fetch(`${BASE_URL}${endpoint}&api_key=${TMDB_API_KEY}&language=id-ID`); const data = await res.json();
@@ -439,7 +445,8 @@
                     const imgPath = item.poster_path || item.profile_path; if (!imgPath) return; 
                     const title = item.title || item.name; const card = document.createElement('div'); card.className = 'movie-card';
                     const encodedData = encodeURIComponent(JSON.stringify({ id: item.id, title: title, poster_path: imgPath, media_type: item.media_type || (item.name ? 'tv' : 'movie') }));
-                    card.innerHTML = `<img src="${IMG_URL + imgPath}" alt="${title}" onclick="openSheetFromEncoded('${encodedData}')"><div class="title" onclick="openSheetFromEncoded('${encodedData}')">${title}</div>`;
+                    card.dataset.encoded = encodedData;
+                    card.innerHTML = `<img src="${IMG_URL + imgPath}" alt="${title}" onclick="openSheetFromEncoded('${encodedData}')"><div class="title" onclick="openSheetFromEncoded('${encodedData}')">${title}</div>${getMovieBadge(item.id)}`;
                     container.appendChild(card);
                 });
             } catch (err) { }
@@ -451,9 +458,8 @@
             clearTimeout(searchTimeout); const query = this.value.trim();
             if(query.length === 0) { if(isSearchOpen) closeLayerProgrammatically(); return; }
             if(query.length < 2) return; 
-            
             searchTimeout = setTimeout(async () => {
-                if(!isSearchOpen) { openLayer('search'); isSearchOpen = true; document.getElementById('explore-area').style.display = 'none'; document.getElementById('search-area').style.display = 'block'; }
+                if(!isSearchOpen) { openLayer('search'); document.getElementById('explore-area').style.display = 'none'; document.getElementById('search-area').style.display = 'block'; }
                 document.getElementById('search-title').innerText = `Mencari: "${query}"...`;
                 const container = document.getElementById('search-container'); container.innerHTML = '<p style="grid-column: 1 / -1; text-align:center;">Mencari film...</p>';
                 try {
@@ -461,26 +467,30 @@
                     const data = await res.json(); container.innerHTML = '';
                     if(!data.results || data.results.length === 0) { container.innerHTML = '<p style="grid-column: 1 / -1; text-align:center; color:#8e8e93;">Tidak ada hasil.</p>'; } 
                     else {
-                        let hasValidResults = false;
                         data.results.forEach(item => {
                             const imgPath = item.poster_path || item.profile_path; if (!imgPath) return; 
-                            hasValidResults = true; const title = item.title || item.name; const card = document.createElement('div'); card.className = 'movie-card';
+                            const title = item.title || item.name; const card = document.createElement('div'); card.className = 'movie-card';
                             const encodedData = encodeURIComponent(JSON.stringify({ id: item.id, title: title, poster_path: imgPath, media_type: item.media_type || (item.name ? 'tv' : 'movie') }));
-                            card.innerHTML = `<img src="${IMG_URL + imgPath}" alt="${title}" onclick="openSheetFromEncoded('${encodedData}')"><div class="title" onclick="openSheetFromEncoded('${encodedData}')">${title}</div>`;
+                            card.dataset.encoded = encodedData;
+                            card.innerHTML = `<img src="${IMG_URL + imgPath}" alt="${title}" onclick="openSheetFromEncoded('${encodedData}')"><div class="title" onclick="openSheetFromEncoded('${encodedData}')">${title}</div>${getMovieBadge(item.id)}`;
                             container.appendChild(card);
                         });
-                        if(!hasValidResults) container.innerHTML = '<p style="grid-column: 1 / -1; text-align:center; color:#8e8e93;">Tidak ada hasil berposter.</p>';
                     }
                     document.getElementById('search-title').innerText = `Hasil: "${query}"`;
                 } catch(e) { document.getElementById('search-title').innerText = "Gagal memuat pencarian."; }
             }, 800); 
         });
 
-        // --- 5. BOTTOM SHEET (Film Popup) ---
+        function closeSearch() { closeLayerProgrammatically(); }
+
+        // --- 5. BOTTOM SHEET ---
         function updateFolderDropdowns() {
             const select = document.getElementById('sheet-folder-select');
             select.innerHTML = '<option value="">-- Tidak Masuk Folder --</option>';
-            userFolders.forEach(f => { select.innerHTML += `<option value="${f}">${f}</option>`; });
+            userFolders.sort().forEach(f => {
+                const depth = (f.match(/\//g) || []).length; const prefix = '&nbsp;&nbsp;'.repeat(depth * 2) + (depth > 0 ? '↳ ' : ''); const folderName = f.split('/').pop();
+                select.innerHTML += `<option value="${f}">${prefix}${folderName}</option>`;
+            });
         }
 
         async function openSheetFromEncoded(encodedStr) {
@@ -513,7 +523,8 @@
         }
         async function applyCrop() {
             if(!cropper || !currentUser) return; showToast("Menyimpan foto...");
-            const canvas = cropper.getCroppedCanvas({ width: 400, height: 400 }); const base64Avatar = canvas.toDataURL('image/jpeg', 0.85); document.getElementById('profile-avatar').src = base64Avatar; closeLayerProgrammatically(); 
+            const canvas = cropper.getCroppedCanvas({ width: 400, height: 400 }); const base64Avatar = canvas.toDataURL('image/jpeg', 0.85); document.getElementById('profile-avatar').src = base64Avatar; 
+            closeLayerProgrammatically(); 
             const { error } = await window.supabaseClient.from('ct_profiles').update({ avatar_url: base64Avatar }).eq('id', currentUser.id);
             if(error) showToast("Gagal", "error"); else showToast("Foto diperbarui!");
         }
@@ -531,29 +542,31 @@
             if(!error) { showToast("Rating disimpan!"); const item = trackerDataCache.find(i=>i.tmdb_id===activeRatingId); if(item) item.user_rating = val; renderTrackerData(); closeLayerProgrammatically(); } else showToast("Gagal", "error");
         }
 
-        // --- 8. DELETE MODAL ---
-        function showDeleteModal(tmdbId, title) {
-            openLayer('delete'); pendingDeleteId = tmdbId; pendingDeleteTitle = title;
-            document.getElementById('delete-modal-desc').innerText = `Yakin ingin menghapus "${title}"?`;
-            document.getElementById('delete-modal-overlay').classList.add('active');
-        }
+        // --- 8. CUSTOM MODALS ---
+        function showExitModal() { document.getElementById('exit-modal-overlay').classList.add('active'); }
+        function closeExitModal() { document.getElementById('exit-modal-overlay').classList.remove('active'); }
+        function executeExitApp() { if (navigator.app) { navigator.app.exitApp(); } else if (navigator.device) { navigator.device.exitApp(); } else { window.close(); } }
+
+        function showDeleteModal(tmdbId, title) { openLayer('delete'); pendingDeleteId = tmdbId; document.getElementById('delete-modal-desc').innerText = `Yakin ingin menghapus "${title}"?`; document.getElementById('delete-modal-overlay').classList.add('active'); }
         async function executeDeleteMovie() {
             if(!pendingDeleteId) return; const idToDel = pendingDeleteId; closeLayerProgrammatically(); 
             const el = document.querySelector(`.list-item[data-id="${idToDel}"]`); if(el) { el.style.opacity = '0'; setTimeout(() => el.remove(), 300); }
-            trackerDataCache = trackerDataCache.filter(item => item.tmdb_id !== idToDel); calculateWatchTime(trackerDataCache, 'stat-watchtime'); showToast("Dihapus!");
+            trackerDataCache = trackerDataCache.filter(item => item.tmdb_id !== idToDel); calculateWatchTime(trackerDataCache, 'stat-watchtime'); showToast("Dihapus!"); updateAllBadges();
             await window.supabaseClient.from('ct_watch_history').delete().eq('user_id', currentUser.id).eq('tmdb_id', idToDel);
         }
 
         // --- 9. SUPABASE INIT ---
         const SUPABASE_URL = 'https://dthgwnuycspqnscldoci.supabase.co'; const SUPABASE_ANON_KEY = 'sb_publishable_rrjrH0rdRLAIXhUVzWd_wQ_3An40fkC';
         const persistentStorage = { getItem: (key) => { try { return window.localStorage.getItem(key); } catch(e) { return null; } }, setItem: (key, value) => { try { window.localStorage.setItem(key, value); } catch(e) {} }, removeItem: (key) => { try { window.localStorage.removeItem(key); } catch(e) {} } };
-        const script = document.createElement('script'); script.src = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2";
-        script.onload = async () => { if (window.supabase) { window.supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth: { storage: persistentStorage, autoRefreshToken: true, persistSession: true } }); await checkSession(); } };
-        document.body.appendChild(script);
-
-        setTimeout(() => { fetchMovies('/trending/all/day?', 'trending-container'); }, 500);
-        setTimeout(() => { fetchMovies('/discover/movie?with_companies=420', 'marvel-container'); }, 1500);
-        setTimeout(() => { fetchMovies('/discover/movie?with_companies=12806|9993', 'dc-container'); }, 2500);
+        window.supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth: { storage: persistentStorage, autoRefreshToken: true, persistSession: true } });
+        
+        window.onload = async () => {
+            history.pushState({ page: 'home' }, '');
+            setTimeout(() => { fetchMovies('/trending/all/day?', 'trending-container'); }, 100);
+            setTimeout(() => { fetchMovies('/discover/movie?with_companies=420', 'marvel-container'); }, 600);
+            setTimeout(() => { fetchMovies('/discover/movie?with_companies=12806|9993', 'dc-container'); }, 1100);
+            await checkSession();
+        };
 
         function generateDummyEmail(rawUsername) { return rawUsername.toLowerCase().replace(/\s+/g, '') + "@cinetracker.app"; }
         async function fetchUserProfile(userId, imgElementId) {
@@ -564,11 +577,13 @@
         }
 
         async function checkSession() {
-            if(!window.supabaseClient) return; const { data } = await window.supabaseClient.auth.getSession();
+            const { data } = await window.supabaseClient.auth.getSession();
             if (data && data.session) {
                 currentUser = data.session.user; document.getElementById('auth-section').style.display = 'none'; document.getElementById('user-section').style.display = 'block';
                 document.getElementById('display-username').innerText = "@" + currentUser.email.split('@')[0];
-                await fetchUserProfile(currentUser.id, 'profile-avatar'); if (currentPage === 'tracker' || currentPage === 'profile') fetchAndRenderTracker(); 
+                await fetchUserProfile(currentUser.id, 'profile-avatar'); 
+                fetchFriends();
+                if (currentPage === 'tracker' || currentPage === 'profile') fetchAndRenderTracker(); 
             } else {
                 currentUser = null; document.getElementById('auth-section').style.display = 'block'; document.getElementById('user-section').style.display = 'none';
                 document.getElementById('tracker-msg').innerText = "Silakan login di tab Profile.";
@@ -586,38 +601,34 @@
             if(error) document.getElementById('auth-msg').innerText = "Username/Password salah!"; else { document.getElementById('username').value=''; document.getElementById('password').value=''; document.getElementById('auth-msg').innerText=''; await checkSession(); }
         }
         async function handleLogout() { 
-            await window.supabaseClient.auth.signOut(); trackerDataCache = []; friendTrackerCache = []; userFolders = [];
+            await window.supabaseClient.auth.signOut(); trackerDataCache = []; friendTrackerCache = []; userFolders = []; myFriends = [];
             if(isSearchOpen) closeLayerProgrammatically(); document.getElementById('search-input').value = '';
             document.getElementById('tracker-content').innerHTML = `<i class="fas fa-bookmark fa-3x" style="color:#8e8e93; margin-bottom:15px;"></i><p style="color:#8e8e93; font-size:14px;">Silakan login di tab Profile.</p>`; 
             document.getElementById('stat-watched').innerText="0"; document.getElementById('stat-watchlist').innerText="0"; document.getElementById('stat-favorite').innerText="0"; document.getElementById('stat-watchtime').innerText="0 Jam"; 
-            document.getElementById('friend-search-input').value = ''; document.getElementById('friend-search-msg').innerText = '';
-            await checkSession(); 
+            document.getElementById('friend-list-container').innerHTML = '<p style="font-size: 13px; color: var(--text-muted);">Silakan login.</p>';
+            await checkSession(); updateAllBadges();
         }
 
-        // --- 10. TRACKER & FOLDER PRIBADI ---
-        function setFilter(filterType, btnElement) { 
-            currentFilter = filterType; document.querySelectorAll('#page-tracker .segmented-btn').forEach(btn => btn.classList.remove('active')); 
-            if(btnElement) btnElement.classList.add('active'); renderTrackerData(); 
-        }
+        // --- 10. TRACKER LOKAL & FOLDER PRIBADI ---
+        function setFilter(filterType, btnElement) { currentFilter = filterType; document.querySelectorAll('#page-tracker .segmented-btn').forEach(btn => btn.classList.remove('active')); if(btnElement) btnElement.classList.add('active'); renderTrackerData(); }
 
         async function createFolder() {
-            const name = prompt("Masukkan nama Folder Baru:"); if(!name || name.trim() === "") return;
+            const name = prompt("Nama Folder Baru:\n(Gunakan garis miring '/' untuk sub-folder. Cth: Marvel/Spiderman)");
+            if(!name || name.trim() === "") return;
             if(userFolders.includes(name.trim())) return showToast("Folder sudah ada!", "error");
             userFolders.push(name.trim());
             const {error} = await window.supabaseClient.from('ct_profiles').update({custom_folders: userFolders}).eq('id', currentUser.id);
             if(error) { userFolders.pop(); showToast("Gagal", "error"); } else { showToast("Dibuat!"); updateFolderDropdowns(); renderTrackerData(); }
         }
         async function deleteFolder(e, folderName) {
-            e.stopPropagation(); if(!confirm(`Hapus folder "${folderName}"? Film di dalamnya tidak akan terhapus.`)) return;
+            e.stopPropagation(); if(!confirm(`Hapus folder "${folderName}"? Film di dalamnya akan tetap ada.`)) return;
             userFolders = userFolders.filter(f => f !== folderName);
             await window.supabaseClient.from('ct_profiles').update({custom_folders: userFolders}).eq('id', currentUser.id);
             await window.supabaseClient.from('ct_watch_history').update({folder_name: null}).eq('user_id', currentUser.id).eq('folder_name', folderName);
-            trackerDataCache.forEach(i => { if(i.folder_name === folderName) i.folder_name = null; });
-            showToast("Dihapus!"); updateFolderDropdowns(); renderTrackerData();
+            trackerDataCache.forEach(i => { if(i.folder_name === folderName) i.folder_name = null; }); showToast("Dihapus!"); updateFolderDropdowns(); renderTrackerData();
         }
 
         function openFolder(folderName) { openLayer('folder_view'); activeFolderName = folderName; currentFilter = 'folder_view'; renderTrackerData(); }
-        function closeFolderViewVisual() { activeFolderName = ''; currentFilter = 'folders'; renderTrackerData(); }
 
         async function saveToTracker(status) {
             if(!currentUser) { showToast("Login dulu!", "error"); closeLayerProgrammatically(); switchPageVisual('profile', document.querySelectorAll('.nav-item')[2]); return; }
@@ -629,7 +640,7 @@
         async function fetchAndRenderTracker() {
             if (!currentUser) return;
             const { data, error } = await window.supabaseClient.from('ct_watch_history').select('*').eq('user_id', currentUser.id);
-            if (error) return; trackerDataCache = data; renderTrackerData(); calculateWatchTime(trackerDataCache, 'stat-watchtime'); healRuntimes(trackerDataCache);
+            if (error) return; trackerDataCache = data; renderTrackerData(); calculateWatchTime(trackerDataCache, 'stat-watchtime'); healRuntimes(trackerDataCache); updateAllBadges();
         }
 
         function calculateWatchTime(dataArray, elementId) {
@@ -662,13 +673,15 @@
                 document.getElementById('tracker-list-title').innerText = "Daftar Folder"; document.getElementById('sort-tracker').style.display = 'none';
                 container.innerHTML = `<button class="btn-primary" style="margin-bottom:20px;" onclick="createFolder()"><i class="fas fa-plus"></i> Buat Folder Baru</button>`;
                 if(userFolders.length === 0) { container.innerHTML += `<p style="color:#8e8e93;">Belum ada folder.</p>`; return; }
-                userFolders.forEach(f => {
+                userFolders.sort().forEach(f => {
                     const count = trackerDataCache.filter(i => i.folder_name === f).length;
-                    container.innerHTML += `<div class="folder-card" onclick="openFolder('${f}')"><div class="folder-icon-box"><i class="fas fa-folder"></i></div><div class="folder-title">${f} <span style="font-size:12px; color:var(--text-muted); font-weight:normal; display:block;">${count} Film</span></div><i class="fas fa-trash-alt" style="color:#ff3b30; padding:10px;" onclick="deleteFolder(event, '${f}')"></i></div>`;
+                    const folderNameUI = f.replace(/\//g, ' <i class="fas fa-angle-right" style="font-size:10px;color:gray;"></i> ');
+                    container.innerHTML += `<div class="folder-card" onclick="openFolder('${f}')"><div class="folder-icon-box"><i class="fas fa-folder"></i></div><div class="folder-title">${folderNameUI} <span style="font-size:12px; color:var(--text-muted); font-weight:normal; display:block;">${count} Film</span></div><i class="fas fa-trash-alt" style="color:#ff3b30; padding:10px;" onclick="deleteFolder(event, '${f}')"></i></div>`;
                 }); return;
             }
 
             document.getElementById('sort-tracker').style.display = 'block';
+
             let countWatched = 0, countWatchlist = 0, countFavorite = 0; let displayedData = [];
             trackerDataCache.forEach(item => { 
                 if(item.status === 'watched') countWatched++; else if(item.status === 'watchlist') countWatchlist++; else if(item.status === 'favorite') countFavorite++;
@@ -676,12 +689,14 @@
             });
             document.getElementById('stat-watched').innerText = countWatched; document.getElementById('stat-watchlist').innerText = countWatchlist; document.getElementById('stat-favorite').innerText = countFavorite;
 
-            if(currentFilter === 'folder_view') { document.getElementById('tracker-list-title').innerHTML = `<span style="color:var(--accent); cursor:pointer;" onclick="closeLayerProgrammatically()"><i class="fas fa-arrow-left"></i> ${activeFolderName}</span>`; } 
+            if(currentFilter === 'folder_view') { document.getElementById('tracker-list-title').innerHTML = `<span style="color:var(--accent); cursor:pointer;" onclick="closeLayerProgrammatically()"><i class="fas fa-arrow-left"></i> ${activeFolderName.split('/').pop()}</span>`; } 
             else { document.getElementById('tracker-list-title').innerText = "Koleksi Film"; }
 
             let sortedData = [...displayedData]; const sortType = document.getElementById('sort-tracker').value;
             if(sortType === 'newest') sortedData.sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
+            else if(sortType === 'oldest') sortedData.sort((a,b) => new Date(a.created_at) - new Date(b.created_at));
             else if(sortType === 'az') sortedData.sort((a,b) => a.title.localeCompare(b.title));
+            else if(sortType === 'za') sortedData.sort((a,b) => b.title.localeCompare(a.title));
             else if(sortType === 'duration_desc') sortedData.sort((a,b) => (b.runtime || 0) - (a.runtime || 0));
             else if(sortType === 'rating_desc') sortedData.sort((a,b) => (b.user_rating || 0) - (a.user_rating || 0));
             else if(sortType === 'custom') sortedData.sort((a,b) => (b.custom_order || 0) - (a.custom_order || 0));
@@ -691,14 +706,14 @@
             sortedData.forEach(item => {
                 const div = document.createElement('div'); div.className = 'list-item'; div.dataset.id = item.tmdb_id;
                 const r = parseFloat(item.user_rating || 0).toFixed(1);
-                
                 let statusHtml = ''; if(item.status === 'watched') statusHtml = `<i class="fas fa-check-circle"></i> Selesai`; else if(item.status === 'favorite') statusHtml = `<i class="fas fa-heart"></i> Favorit`; else statusHtml = `<i class="fas fa-clock"></i> Nanti`;
                 let statusColor = item.status === 'watched' ? '#34c759' : (item.status === 'favorite' ? '#ff2d55' : '#ff9500');
-
                 const encodedData = encodeURIComponent(JSON.stringify({ id: item.tmdb_id, title: item.title, poster_path: item.poster_path, media_type: item.media_type, runtime: item.runtime }));
+                div.onclick = function() { openSheetFromEncoded(encodedData); };
+                
                 div.innerHTML = `
-                    <img src="${IMG_URL + item.poster_path}" style="width:60px; height:90px; object-fit:cover; border-radius:8px; margin-right:15px; cursor:pointer;" onclick="openSheetFromEncoded('${encodedData}')">
-                    <div style="flex:1; text-align:left; cursor:pointer;" onclick="openSheetFromEncoded('${encodedData}')">
+                    <img src="${IMG_URL + item.poster_path}" style="width:60px; height:90px; object-fit:cover; border-radius:8px; margin-right:15px;">
+                    <div style="flex:1; text-align:left;">
                         <div style="font-weight:700; font-size:15px; margin-bottom: 3px;">${item.title}</div>
                         <div style="font-size:12px; color:${statusColor};">${statusHtml} • ${item.runtime ? item.runtime + ' Mnt' : '...'}</div>
                         <div class="rating-pill" onclick="event.stopPropagation(); openRatingModal(${item.tmdb_id}, ${item.user_rating})"><i class="fas fa-star"></i> ${r}/10</div>
@@ -724,42 +739,88 @@
             }
         }
 
-        // --- 11. TEMAN ---
-        async function searchFriend() {
-            document.getElementById('friend-search-input').blur(); const input = document.getElementById('friend-search-input').value.trim().toLowerCase();
+        // --- 11. TEMAN & DAFTAR TEMAN ---
+        function openSearchFriendModal() { openLayer('search_friend'); document.getElementById('search-friend-modal').classList.add('active'); document.getElementById('friend-search-input').value=''; document.getElementById('friend-search-msg').innerText=''; }
+        
+        async function executeSearchFriend() {
+            document.getElementById('friend-search-input').blur(); 
+            const input = document.getElementById('friend-search-input').value.trim().toLowerCase();
             const msg = document.getElementById('friend-search-msg'); msg.style.color = 'var(--text-main)';
-            if(!input) { msg.innerText = "Ketik username!"; msg.style.color = 'red'; return; }
+            if(!input) { msg.innerText = "Ketik username dulu!"; msg.style.color = 'red'; return; }
             if(currentUser && input === currentUser.email.split('@')[0]) { msg.innerText = "Itu username kamu sendiri."; msg.style.color = 'red'; return; }
             msg.innerText = "Mencari teman...";
 
             const { data } = await window.supabaseClient.from('ct_profiles').select('id, username, custom_folders').eq('username', input).single();
-            if (data) { msg.innerText = ""; document.getElementById('friend-search-input').value = ""; openFriendPanel(data); } else { msg.innerText = "Tidak ditemukan!"; msg.style.color = 'red'; }
+            if (data) { msg.innerText = ""; closeLayerProgrammatically(); openFriendPanel(data); } else { msg.innerText = "Tidak ditemukan!"; msg.style.color = 'red'; }
+        }
+
+        async function fetchFriends() {
+            const { data } = await window.supabaseClient.from('ct_friends').select('friend_id, ct_profiles!friend_id(username, avatar_url)').eq('user_id', currentUser.id);
+            if(data) { myFriends = data; renderFriends(); }
+        }
+
+        function renderFriends() {
+            const container = document.getElementById('friend-list-container'); container.innerHTML = '';
+            if(myFriends.length === 0) { container.innerHTML = '<p style="font-size: 13px; color: var(--text-muted);">Belum ada teman yang diikuti.</p>'; return; }
+            myFriends.forEach(f => {
+                const username = f.ct_profiles.username;
+                const avatar = f.ct_profiles.avatar_url || `https://ui-avatars.com/api/?name=${username}&background=007aff&color=fff&size=200`;
+                const div = document.createElement('div'); div.className = 'friend-list-item';
+                div.onclick = () => { openFriendPanel({id: f.friend_id, username: username, custom_folders: []}); };
+                div.innerHTML = `<img src="${avatar}"><div class="name">@${username}</div><i class="fas fa-chevron-right" style="color:var(--text-muted); font-size:12px;"></i>`;
+                container.appendChild(div);
+            });
+        }
+
+        async function toggleFriend() {
+            if(!currentUser || !activeFriendProfile) return;
+            const btn = document.getElementById('btn-toggle-friend');
+            const isFollowing = myFriends.find(f => f.friend_id === activeFriendProfile.id);
+            
+            if(isFollowing) {
+                await window.supabaseClient.from('ct_friends').delete().eq('user_id', currentUser.id).eq('friend_id', activeFriendProfile.id);
+                btn.innerHTML = `<i class="fas fa-user-plus"></i> Ikuti`; btn.style.background = 'var(--accent)'; btn.style.color = 'white';
+                myFriends = myFriends.filter(f => f.friend_id !== activeFriendProfile.id);
+            } else {
+                await window.supabaseClient.from('ct_friends').insert({ user_id: currentUser.id, friend_id: activeFriendProfile.id });
+                btn.innerHTML = `<i class="fas fa-user-check"></i> Mengikuti`; btn.style.background = '#e3e3e8'; btn.style.color = 'var(--text-main)';
+                myFriends.push({ friend_id: activeFriendProfile.id, ct_profiles: { username: activeFriendProfile.username, avatar_url: document.getElementById('friend-panel-avatar').src } });
+            }
+            renderFriends();
         }
 
         async function openFriendPanel(friendData) {
-            openLayer('friend_panel');
+            openLayer('friend_panel'); activeFriendProfile = friendData;
             document.getElementById('friend-panel-username').innerText = "@" + friendData.username;
             document.getElementById('friend-panel').style.transform = 'translateX(0)';
             document.getElementById('friend-stat-watched').innerText = "0"; document.getElementById('friend-stat-watchlist').innerText = "0"; document.getElementById('friend-stat-favorite').innerText = "0";
-            await fetchUserProfile(friendData.id, 'friend-panel-avatar');
-            friendFolders = friendData.custom_folders || []; friendFilter = 'all'; document.getElementById('f-btn-all').click();
+            
+            // Set Tombol Ikuti
+            const isFollowing = myFriends.find(f => f.friend_id === friendData.id);
+            const btn = document.getElementById('btn-toggle-friend');
+            if(isFollowing) { btn.innerHTML = `<i class="fas fa-user-check"></i> Mengikuti`; btn.style.background = '#e3e3e8'; btn.style.color = 'var(--text-main)'; } 
+            else { btn.innerHTML = `<i class="fas fa-user-plus"></i> Ikuti`; btn.style.background = 'var(--accent)'; btn.style.color = 'white'; }
+
+            // Fetch ulang profil untuk memastikan dapat array folders terbaru
+            const profileReq = await fetchUserProfile(friendData.id, 'friend-panel-avatar');
+            friendFolders = profileReq?.custom_folders || []; friendFilter = 'all'; document.getElementById('f-btn-all').click();
+            
             const { data } = await window.supabaseClient.from('ct_watch_history').select('*').eq('user_id', friendData.id);
             if (data) { friendTrackerCache = data; renderFriendTrackerData(); calculateWatchTime(friendTrackerCache, 'friend-stat-watchtime'); healRuntimes(friendTrackerCache); }
         }
-        function closeFriendPanelVisual() { document.getElementById('friend-panel').style.transform = 'translateX(100%)'; }
 
         function setFriendFilter(filterType, btnElement) { friendFilter = filterType; document.querySelectorAll('#friend-panel .segmented-btn').forEach(btn => btn.classList.remove('active')); if(btnElement) btnElement.classList.add('active'); renderFriendTrackerData(); }
         function openFriendFolder(folderName) { openLayer('friend_folder_view'); friendActiveFolder = folderName; friendFilter = 'folder_view'; renderFriendTrackerData(); }
-        function closeFriendFolderViewVisual() { friendActiveFolder = ''; friendFilter = 'folders'; renderFriendTrackerData(); }
 
         function renderFriendTrackerData() {
             const container = document.getElementById('friend-tracker-content'); container.innerHTML = '';
             if(friendFilter === 'folders') {
                 document.getElementById('friend-list-title').innerText = "Daftar Folder Teman"; document.getElementById('sort-friend-tracker').style.display = 'none';
-                if(friendFolders.length === 0) { container.innerHTML = `<p style="color:#8e8e93;">Belum ada folder.</p>`; return; }
-                friendFolders.forEach(f => {
+                if(friendFolders.length === 0) { container.innerHTML = `<p style="color:#8e8e93;">Teman ini belum membuat folder.</p>`; return; }
+                friendFolders.sort().forEach(f => {
                     const count = friendTrackerCache.filter(i => i.folder_name === f).length;
-                    container.innerHTML += `<div class="folder-card" onclick="openFriendFolder('${f}')"><div class="folder-icon-box"><i class="fas fa-folder"></i></div><div class="folder-title">${f} <span style="font-size:12px; color:var(--text-muted); display:block; font-weight:normal;">${count} Film</span></div><i class="fas fa-chevron-right" style="color:var(--text-muted);"></i></div>`;
+                    const folderNameUI = f.replace(/\//g, ' <i class="fas fa-angle-right" style="font-size:10px;color:gray;"></i> ');
+                    container.innerHTML += `<div class="folder-card" onclick="openFriendFolder('${f}')"><div class="folder-icon-box"><i class="fas fa-folder"></i></div><div class="folder-title">${folderNameUI} <span style="font-size:12px; color:var(--text-muted); display:block; font-weight:normal;">${count} Film</span></div><i class="fas fa-chevron-right" style="color:var(--text-muted);"></i></div>`;
                 }); return;
             }
 
@@ -771,7 +832,7 @@
             });
             document.getElementById('friend-stat-watched').innerText = countWatched; document.getElementById('friend-stat-watchlist').innerText = countWatchlist; document.getElementById('friend-stat-favorite').innerText = countFavorite;
             
-            if(friendFilter === 'folder_view') { document.getElementById('friend-list-title').innerHTML = `<span style="color:var(--accent); cursor:pointer;" onclick="closeLayerProgrammatically()"><i class="fas fa-arrow-left"></i> ${friendActiveFolder}</span>`; } 
+            if(friendFilter === 'folder_view') { document.getElementById('friend-list-title').innerHTML = `<span style="color:var(--accent); cursor:pointer;" onclick="closeLayerProgrammatically()"><i class="fas fa-arrow-left"></i> ${friendActiveFolder.split('/').pop()}</span>`; } 
             else { document.getElementById('friend-list-title').innerText = "Koleksi Teman"; }
 
             let sortedData = [...displayedData]; const sortType = document.getElementById('sort-friend-tracker').value;
@@ -784,13 +845,14 @@
             sortedData.forEach(item => {
                 const div = document.createElement('div'); div.className = 'list-item';
                 const r = parseFloat(item.user_rating || 0).toFixed(1);
-                let statusHtml = ''; if(item.status === 'watched') statusHtml = `Selesai`; else if(item.status === 'favorite') statusHtml = `Favorit`; else statusHtml = `Nanti`;
+                let statusHtml = ''; if(item.status === 'watched') statusHtml = `Selesai`; else if(item.status === 'favorite') statusHtml = `Favorit`; else statusHtml = `Nanti Saja`;
                 let statusColor = item.status === 'watched' ? '#34c759' : (item.status === 'favorite' ? '#ff2d55' : '#ff9500');
 
                 const encodedData = encodeURIComponent(JSON.stringify({ id: item.tmdb_id, title: item.title, poster_path: item.poster_path, media_type: item.media_type, runtime: item.runtime }));
+                div.onclick = function() { openSheetFromEncoded(encodedData); }; div.style.cursor = 'pointer';
                 div.innerHTML = `
-                    <img src="${IMG_URL + item.poster_path}" style="width:60px; height:90px; object-fit:cover; border-radius:8px; margin-right:15px; cursor:pointer;" onclick="openSheetFromEncoded('${encodedData}')">
-                    <div style="flex:1; text-align:left; cursor:pointer;" onclick="openSheetFromEncoded('${encodedData}')">
+                    <img src="${IMG_URL + item.poster_path}" style="width:60px; height:90px; object-fit:cover; border-radius:8px; margin-right:15px;">
+                    <div style="flex:1; text-align:left;">
                         <div style="font-weight:700; font-size:15px; margin-bottom: 3px;">${item.title}</div>
                         <div style="font-size:12px; color:${statusColor};">${statusHtml} • ${item.runtime ? item.runtime + ' Mnt' : '...'}</div>
                         <div class="rating-pill"><i class="fas fa-star"></i> ${r}/10</div>
