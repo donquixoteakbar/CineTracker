@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>CineTracker</title>
+    <!-- Library CSS -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
     
@@ -18,14 +19,14 @@
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body { font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif; margin: 0; background-color: var(--bg-color); color: var(--text-main); overflow: hidden; width: 100vw; height: 100vh; }
 
-        /* --- Animasi Logo --- */
+        /* --- Animasi Logo Senter (Cinematic Elegan) --- */
         .app-header { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; padding: 5px 0; }
         .ticket-icon { color: var(--gold); font-size: 24px; -webkit-text-stroke: 1px black; transform: rotate(-15deg); filter: drop-shadow(1px 2px 1px rgba(0,0,0,0.2)); }
         
         .logo-wrapper { position: relative; display: inline-block; font-size: 24px; font-weight: 900; letter-spacing: -0.5px; }
         .logo-wrapper::before { content: attr(data-text); position: absolute; left: 0; top: 0; -webkit-text-stroke: 4px black; color: transparent; z-index: 1; }
-        .animated-logo-text { position: relative; z-index: 2; background: linear-gradient(110deg, #d4af37 40%, #ffffff 50%, #d4af37 60%); background-size: 300% auto; color: transparent; -webkit-background-clip: text; background-clip: text; animation: flashlight 6s ease-in-out infinite; }
-        @keyframes flashlight { 0% { background-position: 200% center; } 75% { background-position: -100% center; } 100% { background-position: -100% center; } }
+        .animated-logo-text { position: relative; z-index: 2; background: linear-gradient(110deg, #d4af37 35%, #ffffff 50%, #d4af37 65%); background-size: 200% auto; color: transparent; -webkit-background-clip: text; background-clip: text; animation: flashlight 6s ease-in-out infinite; }
+        @keyframes flashlight { 0% { background-position: 150% center; } 75% { background-position: -50% center; } 100% { background-position: -50% center; } }
 
         /* --- Struktur Halaman --- */
         .page-container { position: relative; width: 100%; height: calc(100vh - var(--nav-height)); overflow: hidden; }
@@ -42,6 +43,7 @@
         .movie-scroll { display: flex; overflow-x: auto; gap: 15px; padding-bottom: 10px; scroll-snap-type: x mandatory; }
         .movie-scroll::-webkit-scrollbar { display: none; }
         .movie-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: 15px; padding-bottom: 20px; }
+        
         .movie-card { flex: 0 0 120px; scroll-snap-align: start; cursor: pointer; position: relative; }
         .movie-card img { width: 100%; aspect-ratio: 2/3; border-radius: 12px; object-fit: cover; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
         .movie-card .title { font-size: 13px; font-weight: 600; margin-top: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -107,13 +109,13 @@
         .sheet-actions { display: flex; gap: 10px; }
         .sheet-actions button { margin-bottom: 0; }
         
-        /* --- Modal Potong Foto & Search Friend --- */
+        /* --- Modal Potong Foto --- */
         #crop-modal { position: fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.9); z-index:5000; display:none; flex-direction:column; }
         .crop-container { flex:1; width:100%; display: flex; justify-content: center; align-items: center; overflow:hidden; }
         .crop-container img { max-width: 100%; max-height: 80vh; }
         .crop-controls { padding: 20px; display:flex; gap:15px; background:#1c1c1e; }
         
-        /* --- Custom Modals APK --- */
+        /* --- Custom Modals (Exit & Delete APK) --- */
         .custom-modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); opacity: 0; visibility: hidden; transition: 0.3s; z-index: 6000; display:flex; justify-content:center; align-items:center; }
         .custom-modal-overlay.active { opacity: 1; visibility: visible; }
         .custom-modal { background: var(--surface-color); width: 80%; max-width: 320px; border-radius: 14px; text-align: center; padding: 20px 20px 0 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); transform: scale(0.95); transition: 0.3s; }
@@ -132,6 +134,7 @@
 </head>
 <body>
 
+    <!-- Toast UI -->
     <div id="ios-toast" class="toast"><i class="fas fa-check-circle" style="color:#34c759; font-size:18px;"></i><span id="toast-message">Berhasil</span></div>
 
     <!-- MODAL CUSTOM UMUM -->
@@ -139,7 +142,7 @@
         <div class="custom-modal">
             <div class="custom-modal-title">Hapus Film?</div>
             <div class="custom-modal-desc" id="delete-modal-desc">Yakin ingin menghapus film ini dari daftarmu?</div>
-            <div class="custom-modal-actions"><button class="custom-modal-btn" onclick="closeLayerProgrammatically()">Batal</button><button class="custom-modal-btn danger" onclick="executeDeleteMovie()">Hapus</button></div>
+            <div class="custom-modal-actions"><button class="custom-modal-btn" onclick="closeDeleteModalVisual()">Batal</button><button class="custom-modal-btn danger" onclick="executeDeleteMovie()">Hapus</button></div>
         </div>
     </div>
 
@@ -147,29 +150,17 @@
         <div class="custom-modal">
             <div class="custom-modal-title">Keluar Aplikasi?</div>
             <div class="custom-modal-desc">Apakah kamu yakin ingin keluar dari CineTracker?</div>
-            <div class="custom-modal-actions"><button class="custom-modal-btn" onclick="closeLayerProgrammatically()">Tidak</button><button class="custom-modal-btn danger" onclick="executeExitApp()">Ya, Keluar</button></div>
-        </div>
-    </div>
-    
-    <!-- Modal Pencarian Teman (DIPERBAIKI) -->
-    <div class="custom-modal-overlay" id="search-friend-modal">
-        <div class="custom-modal">
-            <div class="custom-modal-title">Cari Akun Teman</div>
-            <div class="custom-modal-desc" style="margin-bottom:15px;">
-                <input type="text" id="friend-search-input" class="auth-input" style="margin-bottom:0;" placeholder="Ketik username teman...">
-                <p id="friend-search-msg" style="font-size: 11px; color: #ff3b30; margin: 5px 0 0 0; text-align:left;"></p>
-            </div>
-            <div class="custom-modal-actions"><button class="custom-modal-btn" onclick="closeLayerProgrammatically()">Batal</button><button class="custom-modal-btn" style="font-weight:700;" onclick="executeSearchFriend()">Cari</button></div>
+            <div class="custom-modal-actions"><button class="custom-modal-btn" onclick="closeExitModalVisual()">Tidak</button><button class="custom-modal-btn danger" onclick="executeExitApp()">Ya, Keluar</button></div>
         </div>
     </div>
 
     <div id="crop-modal">
         <div style="text-align: center; color: white; padding-top: env(safe-area-inset-top, 20px); font-size: 14px;">Cubit untuk Zoom & Geser</div>
         <div class="crop-container"><img id="crop-image" src=""></div>
-        <div class="crop-controls"><button class="btn-secondary" style="background:#3a3a3c; color:white; flex:1;" onclick="closeLayerProgrammatically()">Batal</button><button class="btn-primary" style="flex:1; margin-bottom:0;" onclick="applyCrop()">Selesai</button></div>
+        <div class="crop-controls"><button class="btn-secondary" style="background:#3a3a3c; color:white; flex:1;" onclick="closeCropVisual()">Batal</button><button class="btn-primary" style="flex:1; margin-bottom:0;" onclick="applyCrop()">Selesai</button></div>
     </div>
 
-    <div class="overlay" id="rating-overlay" onclick="closeLayerProgrammatically()"></div>
+    <div class="overlay" id="rating-overlay" onclick="closeRatingVisual()"></div>
     <div class="bottom-sheet" id="rating-sheet" style="z-index: 4000; text-align:center;">
         <div class="sheet-handle"></div>
         <h3 style="margin-top:0;">Beri Nilai Film</h3>
@@ -190,7 +181,7 @@
             <h1 class="page-title">Explore</h1>
             <form class="search-form" id="search-form"><i class="fas fa-search"></i><input type="text" id="search-input" placeholder="Ketik judul film..."></form>
             <div id="search-area" style="display: none;">
-                <div class="section-title"><span id="search-title">Hasil</span><span class="close-search" id="close-search" onclick="closeLayerProgrammatically()" style="display:block;">Batal</span></div>
+                <div class="section-title"><span id="search-title">Hasil</span><span class="close-search" id="close-search" onclick="closeSearchVisual()" style="display:block;">Batal</span></div>
                 <div class="movie-grid" id="search-container"></div>
             </div>
             <div id="explore-area">
@@ -245,6 +236,7 @@
                     <div class="avatar-edit-btn"><i class="fas fa-camera"></i></div>
                 </div>
                 <input type="file" id="avatar-upload" accept="image/*" style="display:none;" onchange="initCrop(event)">
+                
                 <h3 id="display-username" style="margin-top:0; font-size: 24px;">@username</h3>
                 
                 <div style="display:flex; justify-content:space-around; margin: 20px 0 10px 0; padding: 15px 0; border-top: 1px solid #e3e3e8;">
@@ -256,11 +248,19 @@
                 <div class="watchtime-box"><div class="watchtime-title">Total Waktu Dihabiskan Menonton</div><div class="watchtime-value" id="stat-watchtime">Menghitung...</div></div>
                 <button class="btn-secondary" style="color:red; margin-bottom: 25px;" onclick="handleLogout()">Logout</button>
                 
+                <!-- PENCARIAN TEMAN TANPA POPUP -->
                 <div style="text-align: left; padding-top: 15px; border-top: 1px solid #e3e3e8;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                         <h4 style="margin: 0; font-size: 16px;">Daftar Teman</h4>
-                        <button onclick="openLayer('search_friend')" style="background: none; border: none; color: var(--accent); font-weight: 600; font-size: 14px; cursor:pointer;"><i class="fas fa-plus"></i> Tambah</button>
                     </div>
+                    
+                    <div class="search-form" style="margin-bottom: 15px; padding: 5px 10px; background: white; border: 1px solid #e3e3e8;">
+                        <i class="fas fa-search" style="color: var(--text-muted);"></i>
+                        <input type="text" id="friend-search-input" placeholder="Cari username teman..." style="font-size: 14px;">
+                        <button onclick="searchFriend()" style="background: none; border: none; color: var(--accent); font-weight: 600; font-size: 14px; cursor:pointer;">Cari</button>
+                    </div>
+                    <p id="friend-search-msg" style="font-size: 12px; color: #ff3b30; margin: -10px 0 10px 0;"></p>
+
                     <div id="friend-list-container"><p style="font-size: 13px; color: var(--text-muted);">Belum ada teman yang diikuti.</p></div>
                 </div>
             </div>
@@ -275,7 +275,7 @@
     </div>
 
     <!-- ================= BOTTOM SHEET FILM ================= -->
-    <div class="overlay" id="sheet-overlay" onclick="closeLayerProgrammatically()"></div>
+    <div class="overlay" id="sheet-overlay" onclick="closeSheetVisual()"></div>
     <div class="bottom-sheet" id="movie-sheet">
         <div class="sheet-handle"></div>
         <div class="sheet-header">
@@ -306,7 +306,7 @@
     <div id="friend-panel" style="position:fixed; top:0; left:0; width:100%; height:100%; background:var(--bg-color); z-index:2500; transform:translateX(100%); transition:transform 0.4s cubic-bezier(0.36, 0.66, 0.04, 1); overflow-y:auto; padding-bottom: 40px;">
         <div style="background: white; padding: 20px; padding-top: max(20px, env(safe-area-inset-top)); display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e3e3e8; position: sticky; top: 0; z-index: 10;">
             <div style="display:flex; align-items:center;">
-                <i class="fas fa-chevron-left" onclick="closeLayerProgrammatically()" style="font-size: 20px; color: var(--accent); padding-right: 15px; cursor: pointer;"></i>
+                <i class="fas fa-chevron-left" onclick="closeFriendPanelVisual()" style="font-size: 20px; color: var(--accent); padding-right: 15px; cursor: pointer;"></i>
                 <h2 style="margin: 0; font-size: 20px;">Profil Teman</h2>
             </div>
             <button id="btn-toggle-friend" class="btn-primary" style="margin:0; padding:6px 12px; width:auto; font-size:13px; border-radius:20px;" onclick="toggleFriend()"><i class="fas fa-user-plus"></i> Ikuti</button>
@@ -343,6 +343,7 @@
                 <option value="za">Z - A (Judul)</option>
             </select>
         </div>
+        <p style="text-align:center; font-size: 12px; color: var(--text-muted); margin: 0 20px;">Tekan film untuk menyalin ke tracker-mu.</p>
         <div id="friend-tracker-content" style="margin: 10px 20px;"></div>
     </div>
 
@@ -353,51 +354,28 @@
 
     <!-- ================= LOGIKA APLIKASI ================= -->
     <script>
-        // --- 1. HISTORY NATIVE & ROUTING HASH (ANTI KELUAR) ---
-        let modalStack = []; let isScriptHash = false;
+        // --- 1. MASTER BACK TRAP (ANTI FORCE CLOSE APK) ---
+        window.addEventListener('load', () => { history.pushState({ intercept: true }, ''); });
         
-        function openLayer(layerId) { 
-            isScriptHash = true; 
-            modalStack.push(layerId); 
-            window.location.hash = "view_" + Date.now(); 
-            
-            // Visual logic terpisah berdasarkan ID
-            if(layerId === 'search_friend') { document.getElementById('search-friend-modal').classList.add('active'); }
-            else if(layerId === 'exit') { document.getElementById('exit-modal-overlay').classList.add('active'); }
-        }
+        window.addEventListener('popstate', (e) => {
+            // Panggil ulang jebakannya agar tidak keluar aplikasi
+            history.pushState({ intercept: true }, '');
 
-        window.addEventListener('hashchange', function() {
-            if (isScriptHash) { isScriptHash = false; return; }
-            if (modalStack.length > 0) { 
-                const topLayer = modalStack.pop(); 
-                executeCloseVisual(topLayer); 
-            } else { 
-                openLayer('exit'); 
-            }
+            // Logika Penutupan Berdasarkan Hierarki Visual
+            if (document.getElementById('crop-modal').style.display === 'flex') { closeCropVisual(); } 
+            else if (document.getElementById('rating-overlay').classList.contains('active')) { closeRatingVisual(); } 
+            else if (document.getElementById('sheet-overlay').classList.contains('active')) { closeSheetVisual(); } 
+            else if (document.getElementById('delete-modal-overlay').classList.contains('active')) { closeDeleteModalVisual(); } 
+            else if (document.getElementById('exit-modal-overlay').classList.contains('active')) { closeExitModalVisual(); } 
+            else if (friendActiveFolder !== "") { goBackToFriendFolder(); } 
+            else if (activeFolderName !== "") { goBackToFolder(); } 
+            else if (document.getElementById('friend-panel').style.transform === 'translateX(0px)' || document.getElementById('friend-panel').style.transform === 'translateX(0)') { 
+                closeFriendPanelVisual(); switchPageVisual('profile', document.querySelectorAll('.nav-item')[2]); 
+            } 
+            else if (isSearchOpen) { closeSearchVisual(); } 
+            else if (currentPage === 'tracker' || currentPage === 'profile') { switchPageVisual('home', document.querySelectorAll('.nav-item')[0]); } 
+            else if (currentPage === 'home') { showExitModal(); }
         });
-
-        function closeLayerProgrammatically() { if (modalStack.length > 0) history.back(); }
-
-        function executeCloseVisual(layerId) {
-            if(layerId === 'crop') { document.getElementById('crop-modal').style.display = 'none'; if(cropper) cropper.destroy(); }
-            else if(layerId === 'sheet') { document.getElementById('sheet-overlay').classList.remove('active'); document.getElementById('movie-sheet').classList.remove('active'); }
-            else if(layerId === 'rating') { document.getElementById('rating-overlay').classList.remove('active'); document.getElementById('rating-sheet').classList.remove('active'); activeRatingId = null; }
-            else if(layerId === 'delete') { document.getElementById('delete-modal-overlay').classList.remove('active'); pendingDeleteId = null; }
-            else if(layerId === 'search') { isSearchOpen = false; document.getElementById('search-input').value = ''; document.getElementById('explore-area').style.display = 'block'; document.getElementById('search-area').style.display = 'none'; document.getElementById('search-container').innerHTML = ''; }
-            else if(layerId === 'friend_panel') { document.getElementById('friend-panel').style.transform = 'translateX(100%)'; }
-            else if(layerId === 'search_friend') { document.getElementById('search-friend-modal').classList.remove('active'); }
-            else if(layerId === 'exit') { document.getElementById('exit-modal-overlay').classList.remove('active'); }
-            
-            // Logika Sub-Folder Mundur ke Induk
-            else if(layerId.startsWith('dir_')) { 
-                let parts = activeFolderName.split('/'); parts.pop(); activeFolderName = parts.join('/');
-                if(activeFolderName === "") currentFilter = 'folders'; renderTrackerData();
-            }
-            else if(layerId.startsWith('fdir_')) { 
-                let parts = friendActiveFolder.split('/'); parts.pop(); friendActiveFolder = parts.join('/');
-                if(friendActiveFolder === "") friendFilter = 'folders'; renderFriendTrackerData();
-            }
-        }
 
         // --- 2. UTILITAS & BADGE ---
         function showToast(message, type = "success") {
@@ -412,7 +390,7 @@
         let currentUser = null; let userFolders = []; let friendFolders = []; let myFriends = []; let activeFriendProfile = null;
         let selectedMovie = null; let trackerDataCache = []; let friendTrackerCache = [];
         let currentFilter = 'all'; let activeFolderName = ''; let friendFilter = 'all'; let friendActiveFolder = '';
-        let activeRatingId = null; let cropper = null; let sortableInstance = null; let pendingDeleteId = null; let isSearchOpen = false;
+        let activeRatingId = null; let cropper = null; let sortableInstance = null; let pendingDeleteId = null; let pendingDeleteTitle = ""; let isSearchOpen = false;
 
         function getMovieBadge(tmdbId) {
             const item = trackerDataCache.find(i => i.tmdb_id == tmdbId);
@@ -447,7 +425,7 @@
         }
         function switchPage(targetPageId, navElement) {
             if (currentPage === targetPageId) return;
-            if(isSearchOpen) closeLayerProgrammatically();
+            if(isSearchOpen) closeSearchVisual();
             switchPageVisual(targetPageId, navElement);
         }
 
@@ -472,10 +450,10 @@
         document.getElementById('search-form').addEventListener('submit', function(e) { e.preventDefault(); document.getElementById('search-input').blur(); });
         document.getElementById('search-input').addEventListener('input', function() {
             clearTimeout(searchTimeout); const query = this.value.trim();
-            if(query.length === 0) { if(isSearchOpen) closeLayerProgrammatically(); return; }
+            if(query.length === 0) { closeSearchVisual(); return; }
             if(query.length < 2) return; 
             searchTimeout = setTimeout(async () => {
-                if(!isSearchOpen) { openLayer('search'); isSearchOpen = true; document.getElementById('explore-area').style.display = 'none'; document.getElementById('search-area').style.display = 'block'; }
+                isSearchOpen = true; document.getElementById('explore-area').style.display = 'none'; document.getElementById('search-area').style.display = 'block';
                 document.getElementById('search-title').innerText = `Mencari: "${query}"...`;
                 const container = document.getElementById('search-container'); container.innerHTML = '<p style="grid-column: 1 / -1; text-align:center;">Mencari film...</p>';
                 try {
@@ -497,10 +475,11 @@
             }, 800); 
         });
 
-        // --- 5. BOTTOM SHEET (Film Popup) ---
+        function closeSearchVisual() { isSearchOpen = false; document.getElementById('search-input').value = ''; document.getElementById('explore-area').style.display = 'block'; document.getElementById('search-area').style.display = 'none'; document.getElementById('search-container').innerHTML = ''; }
+
+        // --- 5. BOTTOM SHEET ---
         function updateFolderDropdowns() {
-            const select = document.getElementById('sheet-folder-select');
-            select.innerHTML = '<option value="">-- Tidak Masuk Folder --</option>';
+            const select = document.getElementById('sheet-folder-select'); select.innerHTML = '<option value="">-- Tidak Masuk Folder --</option>';
             userFolders.sort().forEach(f => {
                 const depth = (f.match(/\//g) || []).length; const prefix = '&nbsp;&nbsp;'.repeat(depth * 2) + (depth > 0 ? '↳ ' : ''); const folderName = f.split('/').pop();
                 select.innerHTML += `<option value="${f}">${prefix}${folderName}</option>`;
@@ -508,7 +487,6 @@
         }
 
         async function openSheetFromEncoded(encodedStr) {
-            openLayer('sheet');
             selectedMovie = JSON.parse(decodeURIComponent(encodedStr)); const isTV = selectedMovie.media_type === 'tv';
             document.getElementById('sheet-poster').src = IMG_URL + selectedMovie.poster_path; document.getElementById('sheet-title').innerText = selectedMovie.title; document.getElementById('sheet-meta').innerText = "Memuat..."; document.getElementById('sheet-rating').innerHTML = ""; document.getElementById('sheet-genres').innerHTML = ""; document.getElementById('sheet-overview').innerText = "Sedang mengambil detail...";
             
@@ -524,10 +502,11 @@
                 if(detail.genres) document.getElementById('sheet-genres').innerHTML = detail.genres.slice(0,3).map(g=>`<span class="sheet-tag">${g.name}</span>`).join('');
             } catch (err) {}
         }
+        function closeSheetVisual() { document.getElementById('sheet-overlay').classList.remove('active'); document.getElementById('movie-sheet').classList.remove('active'); }
 
         // --- 6. CROPPER ---
         function initCrop(event) {
-            const file = event.target.files[0]; if (!file) return; openLayer('crop');
+            const file = event.target.files[0]; if (!file) return;
             const reader = new FileReader();
             reader.onload = function(e) {
                 document.getElementById('crop-modal').style.display = 'flex'; const image = document.getElementById('crop-image'); image.src = e.target.result;
@@ -535,48 +514,52 @@
                 cropper = new Cropper(image, { aspectRatio: 1, viewMode: 1, dragMode: 'move', autoCropArea: 0.9, restore: false, guides: false, center: false, highlight: false, cropBoxMovable: false, cropBoxResizable: false, toggleDragModeOnDblclick: false, zoomOnTouch: true, zoomOnWheel: true });
             }; reader.readAsDataURL(file); event.target.value = '';
         }
+        function closeCropVisual() { document.getElementById('crop-modal').style.display = 'none'; if(cropper) cropper.destroy(); }
         async function applyCrop() {
             if(!cropper || !currentUser) return; showToast("Menyimpan foto...");
-            const canvas = cropper.getCroppedCanvas({ width: 400, height: 400 }); const base64Avatar = canvas.toDataURL('image/jpeg', 0.85); document.getElementById('profile-avatar').src = base64Avatar; 
-            closeLayerProgrammatically(); 
+            const canvas = cropper.getCroppedCanvas({ width: 400, height: 400 }); const base64Avatar = canvas.toDataURL('image/jpeg', 0.85); document.getElementById('profile-avatar').src = base64Avatar; closeCropVisual(); 
             const { error } = await window.supabaseClient.from('ct_profiles').update({ avatar_url: base64Avatar }).eq('id', currentUser.id);
             if(error) showToast("Gagal", "error"); else showToast("Foto diperbarui!");
         }
 
-        // --- 7. RATING & EXIT MODAL ---
+        // --- 7. RATING MODAL ---
         function openRatingModal(tmdbId, currentRating) {
-            openLayer('rating'); activeRatingId = tmdbId; document.getElementById('rating-slider').value = currentRating || 0.0; updateRatingDisplay(currentRating || 0.0);
+            activeRatingId = tmdbId; document.getElementById('rating-slider').value = currentRating || 0.0; updateRatingDisplay(currentRating || 0.0);
             document.getElementById('rating-overlay').classList.add('active'); document.getElementById('rating-sheet').classList.add('active');
         }
+        function closeRatingVisual() { document.getElementById('rating-overlay').classList.remove('active'); document.getElementById('rating-sheet').classList.remove('active'); activeRatingId = null; }
         function updateRatingDisplay(val) { document.getElementById('rating-display').innerText = parseFloat(val).toFixed(1); }
         function adjustRating(amount) { const slider = document.getElementById('rating-slider'); let newVal = parseFloat(slider.value) + amount; if(newVal < 0) newVal = 0; if(newVal > 10) newVal = 10; slider.value = newVal; updateRatingDisplay(newVal); }
         async function saveRating() {
             if(!activeRatingId || !currentUser) return; const val = parseFloat(document.getElementById('rating-slider').value);
             const { error } = await window.supabaseClient.from('ct_watch_history').update({ user_rating: val }).eq('user_id', currentUser.id).eq('tmdb_id', activeRatingId);
-            if(!error) { showToast("Rating disimpan!"); const item = trackerDataCache.find(i=>i.tmdb_id===activeRatingId); if(item) item.user_rating = val; renderTrackerData(); closeLayerProgrammatically(); } else showToast("Gagal", "error");
+            if(!error) { showToast("Rating disimpan!"); const item = trackerDataCache.find(i=>i.tmdb_id===activeRatingId); if(item) item.user_rating = val; renderTrackerData(); closeRatingVisual(); } else showToast("Gagal", "error");
         }
 
+        // --- 8. CUSTOM MODALS (Delete & Exit APK) ---
+        function showExitModal() { document.getElementById('exit-modal-overlay').classList.add('active'); }
+        function closeExitModalVisual() { document.getElementById('exit-modal-overlay').classList.remove('active'); }
         function executeExitApp() { if (navigator.app) { navigator.app.exitApp(); } else if (navigator.device) { navigator.device.exitApp(); } else { window.close(); } }
-        function showDeleteModal(tmdbId, title) { openLayer('delete'); pendingDeleteId = tmdbId; document.getElementById('delete-modal-desc').innerText = `Yakin ingin menghapus "${title}"?`; document.getElementById('delete-modal-overlay').classList.add('active'); }
+
+        function showDeleteModal(tmdbId, title) { pendingDeleteId = tmdbId; document.getElementById('delete-modal-desc').innerText = `Yakin ingin menghapus "${title}"?`; document.getElementById('delete-modal-overlay').classList.add('active'); }
+        function closeDeleteModalVisual() { document.getElementById('delete-modal-overlay').classList.remove('active'); pendingDeleteId = null; }
         async function executeDeleteMovie() {
-            if(!pendingDeleteId) return; const idToDel = pendingDeleteId; closeLayerProgrammatically(); 
+            if(!pendingDeleteId) return; const idToDel = pendingDeleteId; closeDeleteModalVisual(); 
             const el = document.querySelector(`.list-item[data-id="${idToDel}"]`); if(el) { el.style.opacity = '0'; setTimeout(() => el.remove(), 300); }
             trackerDataCache = trackerDataCache.filter(item => item.tmdb_id !== idToDel); calculateWatchTime(trackerDataCache, 'stat-watchtime'); showToast("Dihapus!"); updateAllBadges();
             await window.supabaseClient.from('ct_watch_history').delete().eq('user_id', currentUser.id).eq('tmdb_id', idToDel);
         }
 
-        // --- 8. SUPABASE INIT ---
+        // --- 9. SUPABASE INIT ---
         const SUPABASE_URL = 'https://dthgwnuycspqnscldoci.supabase.co'; const SUPABASE_ANON_KEY = 'sb_publishable_rrjrH0rdRLAIXhUVzWd_wQ_3An40fkC';
         const persistentStorage = { getItem: (key) => { try { return window.localStorage.getItem(key); } catch(e) { return null; } }, setItem: (key, value) => { try { window.localStorage.setItem(key, value); } catch(e) {} }, removeItem: (key) => { try { window.localStorage.removeItem(key); } catch(e) {} } };
-        window.supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth: { storage: persistentStorage, autoRefreshToken: true, persistSession: true } });
-        
-        window.onload = async () => {
-            history.pushState({ page: 'home' }, '');
-            setTimeout(() => { fetchMovies('/trending/all/day?', 'trending-container'); }, 100);
-            setTimeout(() => { fetchMovies('/discover/movie?with_companies=420', 'marvel-container'); }, 600);
-            setTimeout(() => { fetchMovies('/discover/movie?with_companies=12806|9993', 'dc-container'); }, 1100);
-            await checkSession();
-        };
+        const script = document.createElement('script'); script.src = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2";
+        script.onload = async () => { if (window.supabase) { window.supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth: { storage: persistentStorage, autoRefreshToken: true, persistSession: true } }); await checkSession(); } };
+        document.body.appendChild(script);
+
+        setTimeout(() => { fetchMovies('/trending/all/day?', 'trending-container'); }, 500);
+        setTimeout(() => { fetchMovies('/discover/movie?with_companies=420', 'marvel-container'); }, 1500);
+        setTimeout(() => { fetchMovies('/discover/movie?with_companies=12806|9993', 'dc-container'); }, 2500);
 
         function generateDummyEmail(rawUsername) { return rawUsername.toLowerCase().replace(/\s+/g, '') + "@cinetracker.app"; }
         async function fetchUserProfile(userId, imgElementId) {
@@ -611,21 +594,20 @@
         }
         async function handleLogout() { 
             await window.supabaseClient.auth.signOut(); trackerDataCache = []; friendTrackerCache = []; userFolders = []; myFriends = [];
-            if(isSearchOpen) closeLayerProgrammatically(); document.getElementById('search-input').value = '';
+            if(isSearchOpen) closeSearchVisual(); document.getElementById('search-input').value = '';
             document.getElementById('tracker-content').innerHTML = `<i class="fas fa-bookmark fa-3x" style="color:#8e8e93; margin-bottom:15px;"></i><p style="color:#8e8e93; font-size:14px;">Silakan login di tab Profile.</p>`; 
             document.getElementById('stat-watched').innerText="0"; document.getElementById('stat-watchlist').innerText="0"; document.getElementById('stat-favorite').innerText="0"; document.getElementById('stat-watchtime').innerText="0 Jam"; 
-            document.getElementById('friend-list-container').innerHTML = '<p style="font-size: 13px; color: var(--text-muted);">Silakan login.</p>';
+            document.getElementById('friend-search-input').value = ''; document.getElementById('friend-search-msg').innerText = ''; document.getElementById('friend-list-container').innerHTML = '<p style="font-size: 13px; color: var(--text-muted);">Silakan login.</p>';
             await checkSession(); updateAllBadges();
         }
 
-        // --- 9. TRACKER LOKAL & SUB-FOLDERS ---
+        // --- 10. TRACKER LOKAL & FOLDER ---
         function setFilter(filterType, btnElement) { currentFilter = filterType; document.querySelectorAll('#page-tracker .segmented-btn').forEach(btn => btn.classList.remove('active')); if(btnElement) btnElement.classList.add('active'); renderTrackerData(); }
 
-        // Fitur Pembuatan Sub-Folder
         async function createFolder() {
             const childName = prompt("Nama Folder Baru:\n(Gunakan garis miring '/' jika ingin sub-folder, misal: Marvel/Spiderman)");
             if(!childName || childName.trim() === "") return;
-            const cleanName = childName.trim().replace(/\/+/g, '/').replace(/^\/|\/$/g, ''); // bersihkan slash ganda
+            const cleanName = childName.trim().replace(/\/+/g, '/').replace(/^\/|\/$/g, ''); 
             const fullPath = activeFolderName === "" ? cleanName : activeFolderName + "/" + cleanName;
             
             if(userFolders.includes(fullPath)) return showToast("Folder sudah ada!", "error");
@@ -641,7 +623,6 @@
             trackerDataCache.forEach(i => { if(i.folder_name === folderName) i.folder_name = null; }); showToast("Dihapus!"); updateFolderDropdowns(); renderTrackerData();
         }
 
-        // Fungsi Deteksi Sub-folder Langsung
         function getDirectSubfolders(currentPath, allFolders) {
             const subs = new Set(); const prefix = currentPath === "" ? "" : currentPath + "/";
             allFolders.forEach(f => {
@@ -652,13 +633,18 @@
             }); return Array.from(subs).sort();
         }
 
-        window.openFolder = function(fPath) { openLayer('dir_' + fPath); activeFolderName = fPath; currentFilter = 'folders'; renderTrackerData(); }
+        function openFolder(fPath) { activeFolderName = fPath; currentFilter = 'folder_view'; renderTrackerData(); }
+        function goBackToFolder() {
+            let parts = activeFolderName.split('/'); parts.pop(); activeFolderName = parts.join('/');
+            if(activeFolderName === "") { currentFilter = 'folders'; }
+            renderTrackerData();
+        }
 
         async function saveToTracker(status) {
-            if(!currentUser) { showToast("Login dulu!", "error"); closeLayerProgrammatically(); switchPageVisual('profile', document.querySelectorAll('.nav-item')[2]); return; }
+            if(!currentUser) { showToast("Login dulu!", "error"); closeSheetVisual(); switchPageVisual('profile', document.querySelectorAll('.nav-item')[2]); return; }
             const chosenFolder = document.getElementById('sheet-folder-select').value; const folderVal = chosenFolder === "" ? null : chosenFolder;
             const { error } = await window.supabaseClient.from('ct_watch_history').upsert({ user_id: currentUser.id, tmdb_id: selectedMovie.id, media_type: selectedMovie.media_type, title: selectedMovie.title, poster_path: selectedMovie.poster_path, status: status, runtime: selectedMovie.runtime || 0, custom_order: Date.now(), folder_name: folderVal }, { onConflict: 'user_id, tmdb_id' });
-            if (error) showToast("Gagal", "error"); else { showToast("Tersimpan!"); closeLayerProgrammatically(); fetchAndRenderTracker(); updateAllBadges();}
+            if (error) showToast("Gagal", "error"); else { showToast("Tersimpan!"); closeSheetVisual(); fetchAndRenderTracker(); updateAllBadges();}
         }
 
         async function fetchAndRenderTracker() {
@@ -693,28 +679,21 @@
         function renderTrackerData() {
             const container = document.getElementById('tracker-content'); container.innerHTML = '';
             
-            // Logika Tampilan Folder Bersarang
             if(currentFilter === 'folders') {
                 document.getElementById('sort-tracker').style.display = 'block'; 
-                
                 if(activeFolderName === "") { document.getElementById('tracker-list-title').innerText = "Daftar Folder"; } 
-                else { const parentName = activeFolderName.split('/').pop(); document.getElementById('tracker-list-title').innerHTML = `<span style="color:var(--accent); cursor:pointer;" onclick="closeLayerProgrammatically()"><i class="fas fa-arrow-left"></i> ${parentName}</span>`; }
+                else { const parentName = activeFolderName.split('/').pop(); document.getElementById('tracker-list-title').innerHTML = `<span style="color:var(--accent); cursor:pointer;" onclick="goBackToFolder()"><i class="fas fa-arrow-left"></i> ${parentName}</span>`; }
 
                 container.innerHTML = `<button class="btn-primary" style="margin-bottom:20px;" onclick="createFolder()"><i class="fas fa-plus"></i> Buat Folder di Sini</button>`;
                 
-                // 1. Render Sub-folder
                 const subs = getDirectSubfolders(activeFolderName, userFolders);
                 subs.forEach(f => {
-                    const folderNameUI = f.split('/').pop();
-                    const count = trackerDataCache.filter(i => i.folder_name && i.folder_name.startsWith(f)).length;
+                    const folderNameUI = f.split('/').pop(); const count = trackerDataCache.filter(i => i.folder_name && i.folder_name.startsWith(f)).length;
                     container.innerHTML += `<div class="folder-card" onclick="openFolder('${f}')"><div class="folder-icon-box"><i class="fas fa-folder"></i></div><div class="folder-title">${folderNameUI} <span style="font-size:12px; color:var(--text-muted); display:block; font-weight:normal;">${count} Film</span></div><i class="fas fa-trash-alt" style="color:#ff3b30; padding:10px;" onclick="deleteFolder(event, '${f}')"></i></div>`;
                 });
 
-                // 2. Filter film yang HANYA ADA di folder ini (strictly equals)
                 let folderMovies = trackerDataCache.filter(i => i.folder_name === activeFolderName);
                 if(subs.length === 0 && folderMovies.length === 0) { container.innerHTML += `<p style="color:#8e8e93; text-align:center;">Folder kosong.</p>`; return; }
-                
-                // Gunakan folderMovies sebagai data yang akan di-render di bawah folder
                 var displayedData = folderMovies;
             } else {
                 document.getElementById('sort-tracker').style.display = 'block';
@@ -722,12 +701,10 @@
                 var displayedData = trackerDataCache.filter(item => currentFilter === 'all' || item.status === currentFilter);
             }
 
-            // Hitung Badge Statistik Global
             let countWatched = 0, countWatchlist = 0, countFavorite = 0; 
             trackerDataCache.forEach(item => { if(item.status === 'watched') countWatched++; else if(item.status === 'watchlist') countWatchlist++; else if(item.status === 'favorite') countFavorite++; });
             document.getElementById('stat-watched').innerText = countWatched; document.getElementById('stat-watchlist').innerText = countWatchlist; document.getElementById('stat-favorite').innerText = countFavorite;
 
-            // Sortir dan Render Film
             let sortedData = [...displayedData]; const sortType = document.getElementById('sort-tracker').value;
             if(sortType === 'newest') sortedData.sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
             else if(sortType === 'oldest') sortedData.sort((a,b) => new Date(a.created_at) - new Date(b.created_at));
@@ -742,12 +719,11 @@
             sortedData.forEach(item => {
                 const div = document.createElement('div'); div.className = 'list-item'; div.dataset.id = item.tmdb_id;
                 const r = parseFloat(item.user_rating || 0).toFixed(1);
-                let statusHtml = ''; if(item.status === 'watched') statusHtml = `<i class="fas fa-check-circle"></i> Selesai`; else if(item.status === 'favorite') statusHtml = `<i class="fas fa-heart"></i> Favorit`; else statusHtml = `<i class="fas fa-clock"></i> Nanti`;
+                let statusHtml = ''; if(item.status === 'watched') statusHtml = `Selesai`; else if(item.status === 'favorite') statusHtml = `Favorit`; else statusHtml = `Nanti Saja`;
                 let statusColor = item.status === 'watched' ? '#34c759' : (item.status === 'favorite' ? '#ff2d55' : '#ff9500');
+
                 const encodedData = encodeURIComponent(JSON.stringify({ id: item.tmdb_id, title: item.title, poster_path: item.poster_path, media_type: item.media_type, runtime: item.runtime }));
-                
-                div.onclick = function() { openSheetFromEncoded(encodedData); };
-                
+                div.onclick = function() { openSheetFromEncoded(encodedData); }; div.style.cursor = 'pointer';
                 div.innerHTML = `
                     <img src="${IMG_URL + item.poster_path}" style="width:60px; height:90px; object-fit:cover; border-radius:8px; margin-right:15px;">
                     <div style="flex:1; text-align:left;">
@@ -806,19 +782,20 @@
             } renderFriends();
         }
 
-        async function executeSearchFriend() {
+        async function searchFriend() {
             document.getElementById('friend-search-input').blur(); 
             const input = document.getElementById('friend-search-input').value.trim().toLowerCase();
             const msg = document.getElementById('friend-search-msg'); msg.style.color = 'var(--text-main)';
             if(!input) { msg.innerText = "Ketik username dulu!"; msg.style.color = 'red'; return; }
             if(currentUser && input === currentUser.email.split('@')[0]) { msg.innerText = "Itu username kamu sendiri."; msg.style.color = 'red'; return; }
             msg.innerText = "Mencari teman...";
+
             const { data } = await window.supabaseClient.from('ct_profiles').select('id, username, custom_folders').eq('username', input).single();
-            if (data) { msg.innerText = ""; closeLayerProgrammatically(); openFriendPanel(data); } else { msg.innerText = "Tidak ditemukan!"; msg.style.color = 'red'; }
+            if (data) { msg.innerText = ""; document.getElementById('friend-search-input').value = ""; openFriendPanel(data); } else { msg.innerText = "Tidak ditemukan!"; msg.style.color = 'red'; }
         }
 
         async function openFriendPanel(friendData) {
-            openLayer('friend_panel'); activeFriendProfile = friendData;
+            activeFriendProfile = friendData;
             document.getElementById('friend-panel-username').innerText = "@" + friendData.username;
             document.getElementById('friend-panel').style.transform = 'translateX(0)';
             document.getElementById('friend-stat-watched').innerText = "0"; document.getElementById('friend-stat-watchlist').innerText = "0"; document.getElementById('friend-stat-favorite').innerText = "0";
@@ -832,23 +809,27 @@
             const { data } = await window.supabaseClient.from('ct_watch_history').select('*').eq('user_id', friendData.id);
             if (data) { friendTrackerCache = data; renderFriendTrackerData(); calculateWatchTime(friendTrackerCache, 'friend-stat-watchtime'); healRuntimes(friendTrackerCache); }
         }
+        function closeFriendPanelVisual() { document.getElementById('friend-panel').style.transform = 'translateX(100%)'; }
 
         function setFriendFilter(filterType, btnElement) { friendFilter = filterType; document.querySelectorAll('#friend-panel .segmented-btn').forEach(btn => btn.classList.remove('active')); if(btnElement) btnElement.classList.add('active'); renderFriendTrackerData(); }
-        window.openFriendFolder = function(fPath) { openLayer('fdir_' + fPath); friendActiveFolder = fPath; friendFilter = 'folder_view'; renderFriendTrackerData(); }
+        function openFriendFolder(fPath) { friendActiveFolder = fPath; friendFilter = 'folder_view'; renderFriendTrackerData(); }
+        function goBackToFriendFolder() {
+            let parts = friendActiveFolder.split('/'); parts.pop(); friendActiveFolder = parts.join('/');
+            if(friendActiveFolder === "") { friendFilter = 'folders'; }
+            renderFriendTrackerData();
+        }
 
         function renderFriendTrackerData() {
             const container = document.getElementById('friend-tracker-content'); container.innerHTML = '';
             
-            // Render Folder Bersarang Teman
             if(friendFilter === 'folders') {
                 document.getElementById('sort-friend-tracker').style.display = 'block';
                 if(friendActiveFolder === "") { document.getElementById('friend-list-title').innerText = "Daftar Folder Teman"; } 
-                else { const parentName = friendActiveFolder.split('/').pop(); document.getElementById('friend-list-title').innerHTML = `<span style="color:var(--accent); cursor:pointer;" onclick="closeLayerProgrammatically()"><i class="fas fa-arrow-left"></i> ${parentName}</span>`; }
+                else { const parentName = friendActiveFolder.split('/').pop(); document.getElementById('friend-list-title').innerHTML = `<span style="color:var(--accent); cursor:pointer;" onclick="goBackToFriendFolder()"><i class="fas fa-arrow-left"></i> ${parentName}</span>`; }
 
                 const subs = getDirectSubfolders(friendActiveFolder, friendFolders);
                 subs.forEach(f => {
-                    const folderNameUI = f.split('/').pop();
-                    const count = friendTrackerCache.filter(i => i.folder_name && i.folder_name.startsWith(f)).length;
+                    const folderNameUI = f.split('/').pop(); const count = friendTrackerCache.filter(i => i.folder_name && i.folder_name.startsWith(f)).length;
                     container.innerHTML += `<div class="folder-card" onclick="openFriendFolder('${f}')"><div class="folder-icon-box"><i class="fas fa-folder"></i></div><div class="folder-title">${folderNameUI} <span style="font-size:12px; color:var(--text-muted); display:block; font-weight:normal;">${count} Film</span></div><i class="fas fa-chevron-right" style="color:var(--text-muted);"></i></div>`;
                 });
 
@@ -870,8 +851,7 @@
             else if(sortType === 'az') sortedData.sort((a,b) => a.title.localeCompare(b.title));
             else if(sortType === 'duration_desc') sortedData.sort((a,b) => (b.runtime || 0) - (a.runtime || 0));
             else if(sortType === 'rating_desc') sortedData.sort((a,b) => (b.user_rating || 0) - (a.user_rating || 0));
-            
-            if(sortedData.length === 0 && friendFilter !== 'folders') return container.innerHTML = "<p>Belum ada film.</p>";
+            if(sortedData.length === 0 && friendFilter !== 'folders') return container.innerHTML = "<p>Belum ada film di tab ini.</p>";
 
             sortedData.forEach(item => {
                 const div = document.createElement('div'); div.className = 'list-item';
