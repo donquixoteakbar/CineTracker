@@ -19,7 +19,7 @@
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body { font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif; margin: 0; background-color: var(--bg-color); color: var(--text-main); overflow: hidden; width: 100vw; height: 100vh; }
 
-        /* --- Animasi Logo Senter (Cinematic & Eksternal Outline) --- */
+        /* --- Animasi Logo Senter --- */
         .app-header { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; padding: 5px 0; }
         .ticket-icon { color: var(--gold); font-size: 24px; -webkit-text-stroke: 1px black; transform: rotate(-15deg); filter: drop-shadow(1px 2px 1px rgba(0,0,0,0.2)); }
         
@@ -97,7 +97,7 @@
         /* --- Bottom Sheet --- */
         .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); opacity: 0; visibility: hidden; transition: opacity 0.3s; z-index: 3000; }
         .overlay.active { opacity: 1; visibility: visible; }
-        .bottom-sheet { position: fixed; bottom: 0; left: 0; width: 100%; background: var(--surface-color); border-radius: 25px 25px 0 0; padding: 20px; padding-bottom: calc(20px + env(safe-area-inset-bottom)); transform: translateY(100%); transition: transform 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.1); z-index: 3500; box-shadow: 0 -5px 20px rgba(0,0,0,0.1); }
+        .bottom-sheet { position: fixed; bottom: 0; left: 0; width: 100%; max-height: 90vh; overflow-y: auto; background: var(--surface-color); border-radius: 25px 25px 0 0; padding: 20px; padding-bottom: calc(20px + env(safe-area-inset-bottom)); transform: translateY(100%); transition: transform 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.1); z-index: 3500; box-shadow: 0 -5px 20px rgba(0,0,0,0.1); }
         .bottom-sheet.active { transform: translateY(0); }
         .sheet-handle { width: 40px; height: 5px; background: #d1d1d6; border-radius: 5px; margin: 0 auto 15px auto; }
         .sheet-header { display: flex; gap: 15px; margin-bottom: 15px; align-items: flex-start; }
@@ -112,13 +112,17 @@
         .sheet-actions { display: flex; gap: 10px; }
         .sheet-actions button { margin-bottom: 0; }
         
-        /* --- Modal Potong Foto --- */
+        /* Modal Season List */
+        #sheet-seasons-area { background: #f9f9eb; border: 1px solid #e3e3e8; border-radius: 12px; padding: 12px; margin-bottom: 15px; display: none; }
+        .season-item { display:flex; justify-content:space-between; align-items:center; background:#ffffff; padding:10px; border-radius:8px; margin-bottom:8px; box-shadow: 0 2px 5px rgba(0,0,0,0.02); border: 1px solid #f2f2f7;}
+        .season-item:last-child { margin-bottom: 0; }
+
+        /* --- Modal Potong Foto & Custom Modals --- */
         #crop-modal { position: fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.9); z-index:5000; display:none; flex-direction:column; }
         .crop-container { flex:1; width:100%; display: flex; justify-content: center; align-items: center; overflow:hidden; }
         .crop-container img { max-width: 100%; max-height: 80vh; }
         .crop-controls { padding: 20px; display:flex; gap:15px; background:#1c1c1e; }
         
-        /* --- Custom Modals APK --- */
         .custom-modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); opacity: 0; visibility: hidden; transition: 0.3s; z-index: 6000; display:flex; justify-content:center; align-items:center; }
         .custom-modal-overlay.active { opacity: 1; visibility: visible; }
         .custom-modal { background: var(--surface-color); width: 80%; max-width: 320px; border-radius: 14px; text-align: center; padding: 20px 20px 0 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); transform: scale(0.95); transition: 0.3s; }
@@ -295,13 +299,20 @@
         <div class="sheet-tags" id="sheet-genres"></div>
         <div class="sheet-overview" id="sheet-overview">Sedang mengambil detail cerita...</div>
         
+        <!-- AREA KHUSUS DAFTAR SEASON (Untuk TV Series) -->
+        <div id="sheet-seasons-area">
+            <h4 style="margin:0 0 10px 0; font-size:14px;"><i class="fas fa-list-ol"></i> Pilih Simpan per Season</h4>
+            <div id="seasons-list"></div>
+        </div>
+
         <div style="margin-bottom: 15px;">
             <select id="sheet-folder-select" class="sort-dropdown" style="width:100%;">
                 <option value="">-- Tidak Masuk Folder --</option>
             </select>
         </div>
 
-        <div class="sheet-actions" style="flex-wrap: wrap;">
+        <div class="sheet-actions" style="flex-wrap: wrap;" id="sheet-main-actions">
+            <p style="flex: 1 1 100%; font-size: 12px; color: var(--text-muted); margin: 0; text-align:center;" id="sheet-series-note">Tombol di bawah ini untuk menyimpan KESELURUHAN film/series.</p>
             <button class="btn-primary" style="flex: 1 1 45%;" onclick="saveToTracker('watched')"><i class="fas fa-check-circle"></i> Sudah</button>
             <button class="btn-secondary" style="flex: 1 1 45%;" onclick="saveToTracker('watchlist')"><i class="fas fa-clock"></i> Nanti</button>
             <button class="btn-secondary" style="flex: 1 1 100%; color: #ff2d55; background: #ffe5eb;" onclick="saveToTracker('favorite')"><i class="fas fa-heart"></i> Jadikan Favorit</button>
@@ -392,12 +403,8 @@
             if (isScriptHash) { isScriptHash = false; return; }
             if (modalStack.length > 0) { const topLayer = modalStack.pop(); executeCloseVisual(topLayer); } 
             else { 
-                if (currentPage !== 'home') {
-                    switchPageVisual('home');
-                    history.pushState({ page: 'home' }, '');
-                } else {
-                    openLayer('exit'); 
-                }
+                if (currentPage !== 'home') { switchPageVisual('home'); history.pushState({ page: 'home' }, ''); } 
+                else { openLayer('exit'); }
             }
         });
 
@@ -468,19 +475,16 @@
             void targetEl.offsetWidth; setTimeout(() => { targetEl.style.transform = ''; currentEl.style.transform = ''; if(tgtIdx < curIdx) currentEl.classList.remove('active'); }, 50);
             
             currentPage = targetPageId; 
-            
-            // PERBAIKAN: Menghapus fetchAndRenderTracker() di sini agar mencegah Race Condition yang menimpa local cache.
-            if(currentPage === 'tracker') { renderTrackerData(); }
-            if(currentPage === 'home') { updateAllBadges(); }
+            if(currentPage === 'tracker') renderTrackerData();
+            if(currentPage === 'home') updateAllBadges();
         }
-        
         function switchPage(targetPageId) {
             if (currentPage === targetPageId) return;
             if(isSearchOpen) closeLayerProgrammatically();
             switchPageVisual(targetPageId);
         }
 
-        // --- 6. FETCH TMDB (Offline Support & URL Fix) ---
+        // --- 6. FETCH TMDB ---
         async function fetchMovies(endpoint, containerId) {
             if(!navigator.onLine) { document.getElementById(containerId).innerHTML = '<p>Offline.</p>'; return; }
             try {
@@ -531,7 +535,7 @@
             }, 800); 
         });
 
-        // --- 7. BOTTOM SHEET & FALLBACK API TVMaze ---
+        // --- 7. BOTTOM SHEET & FITUR SEASON (TV SERIES) ---
         function updateFolderDropdowns() {
             const select = document.getElementById('sheet-folder-select'); select.innerHTML = '<option value="">-- Tidak Masuk Folder --</option>';
             userFolders.sort().forEach(f => {
@@ -544,38 +548,62 @@
             openLayer('sheet');
             selectedMovie = JSON.parse(decodeURIComponent(encodedStr)); const isTV = selectedMovie.media_type === 'tv';
             document.getElementById('sheet-poster').src = IMG_URL + selectedMovie.poster_path; document.getElementById('sheet-title').innerText = selectedMovie.title; document.getElementById('sheet-meta').innerText = "Memuat..."; document.getElementById('sheet-rating').innerHTML = ""; document.getElementById('sheet-genres').innerHTML = ""; document.getElementById('sheet-overview').innerText = "Sedang mengambil detail...";
+            document.getElementById('sheet-seasons-area').style.display = 'none'; document.getElementById('sheet-series-note').style.display = isTV ? 'block' : 'none';
             
-            const existingItem = trackerDataCache.find(i => i.tmdb_id == selectedMovie.id);
+            const existingItem = trackerDataCache.find(i => i.tmdb_id == selectedMovie.id && i.media_type === selectedMovie.media_type);
             document.getElementById('sheet-folder-select').value = (existingItem && existingItem.folder_name) ? existingItem.folder_name : "";
 
             document.getElementById('sheet-overlay').classList.add('active'); document.getElementById('movie-sheet').classList.add('active');
-            
             if(!navigator.onLine) { document.getElementById('sheet-overview').innerText = "Kamu sedang offline. Detail lengkap tidak dapat dimuat."; return; }
 
             try {
                 const res = await fetch(`${BASE_URL}${isTV ? '/tv/' : '/movie/'}${selectedMovie.id}?api_key=${TMDB_API_KEY}&language=id-ID`); const detail = await res.json();
                 const year = (detail.release_date || detail.first_air_date || "N/A").substring(0,4); 
-                let runtime = detail.runtime || (detail.episode_run_time && detail.episode_run_time[0]) || 0; 
                 const rating = detail.vote_average ? detail.vote_average.toFixed(1) : "N/A";
-                let overview = detail.overview || "";
-
-                if(isTV && (runtime === 0 || overview === "")) {
-                    try {
-                        const tvmRes = await fetch(`https://api.tvmaze.com/singlesearch/shows?q=${encodeURIComponent(selectedMovie.title)}`);
-                        if(tvmRes.ok) {
-                            const tvData = await tvmRes.json();
-                            if(runtime === 0) runtime = tvData.averageRuntime || tvData.runtime || 0;
-                            if(overview === "" && tvData.summary) {
-                                let tmp = document.createElement("div"); tmp.innerHTML = tvData.summary; overview = tmp.textContent || tmp.innerText || "";
-                            }
-                        }
-                    } catch(e){}
+                let overview = detail.overview || "Tidak ada sinopsis yang tersedia.";
+                
+                // Kalkulasi Runtime
+                let avgRuntime = 0;
+                if (detail.episode_run_time && detail.episode_run_time.length > 0) avgRuntime = detail.episode_run_time[0];
+                else if (detail.runtime) avgRuntime = detail.runtime;
+                else if (isTV) {
+                    try { const tvmRes = await fetch(`https://api.tvmaze.com/singlesearch/shows?q=${encodeURIComponent(selectedMovie.title)}`); if(tvmRes.ok) { const tvData = await tvmRes.json(); avgRuntime = tvData.averageRuntime || tvData.runtime || 0; } } catch(e){}
                 }
+                if(avgRuntime === 0) avgRuntime = isTV ? 45 : 120; // Default antisipasi jika 0
 
-                selectedMovie.runtime = runtime;
-                if(overview === "") overview = "Tidak ada sinopsis yang tersedia.";
-
-                document.getElementById('sheet-meta').innerText = `${year} • ${formatRuntime(runtime)} • ${isTV ? 'TV Series' : 'Movie'}`; 
+                let totalSeriesRuntime = avgRuntime;
+                
+                // Tampilkan Daftar Season Jika Ini TV Series
+                if (isTV && detail.seasons && detail.seasons.length > 0) {
+                    totalSeriesRuntime = 0;
+                    document.getElementById('sheet-seasons-area').style.display = 'block';
+                    const seasonsContainer = document.getElementById('seasons-list'); seasonsContainer.innerHTML = '';
+                    
+                    detail.seasons.forEach(s => {
+                        if (s.season_number > 0) { // Lewati season 0 (Specials)
+                            const epsCount = s.episode_count || 0;
+                            const seasonMins = epsCount * avgRuntime;
+                            totalSeriesRuntime += seasonMins;
+                            
+                            seasonsContainer.innerHTML += `
+                                <div class="season-item">
+                                    <div>
+                                        <div style="font-weight:700; font-size:14px; color:var(--accent);">${s.name}</div>
+                                        <div style="font-size:12px; color:var(--text-muted);">${epsCount} Eps • ± ${formatRuntime(seasonMins)}</div>
+                                    </div>
+                                    <div style="display:flex; gap:6px;">
+                                        <button class="btn-primary" style="padding:6px 12px; font-size:11px; margin-bottom:0;" onclick="saveSeasonToTracker('watched', ${s.season_number}, ${seasonMins}, '${s.name.replace(/'/g, "\\'")}')">Selesai</button>
+                                        <button class="btn-secondary" style="padding:6px 12px; font-size:11px; margin-bottom:0; color:#ff2d55;" onclick="saveSeasonToTracker('favorite', ${s.season_number}, ${seasonMins}, '${s.name.replace(/'/g, "\\'")}')"><i class="fas fa-heart"></i></button>
+                                    </div>
+                                </div>
+                            `;
+                        }
+                    });
+                }
+                
+                selectedMovie.runtime = isTV ? totalSeriesRuntime : avgRuntime;
+                
+                document.getElementById('sheet-meta').innerText = `${year} • ${formatRuntime(selectedMovie.runtime)} • ${isTV ? 'TV Series' : 'Movie'}`; 
                 document.getElementById('sheet-rating').innerHTML = `<i class="fas fa-star"></i> ${rating} <span style="color:var(--text-muted); font-size:12px; font-weight:normal;">/ 10</span>`; 
                 document.getElementById('sheet-overview').innerText = overview;
                 if(detail.genres) document.getElementById('sheet-genres').innerHTML = detail.genres.slice(0,3).map(g=>`<span class="sheet-tag">${g.name}</span>`).join('');
@@ -599,9 +627,9 @@
             if(!error) { showToast("Foto diperbarui!"); localStorage.setItem('ct_profile_'+currentUser.id, JSON.stringify({...JSON.parse(localStorage.getItem('ct_profile_'+currentUser.id) || '{}'), avatar_url: base64Avatar})); }
         }
 
-        // --- 9. RATING & DELETE MODALS ---
-        function openRatingModal(tmdbId, currentRating) {
-            openLayer('rating'); activeRatingId = tmdbId; document.getElementById('rating-slider').value = currentRating || 0.0; updateRatingDisplay(currentRating || 0.0);
+        // --- 9. RATING & DELETE MODALS (Menggunakan Primary ID) ---
+        function openRatingModal(dbUniqueId, currentRating) {
+            openLayer('rating'); activeRatingId = dbUniqueId; document.getElementById('rating-slider').value = currentRating || 0.0; updateRatingDisplay(currentRating || 0.0);
             document.getElementById('rating-overlay').classList.add('active'); document.getElementById('rating-sheet').classList.add('active');
         }
         function updateRatingDisplay(val) { document.getElementById('rating-display').innerText = parseFloat(val).toFixed(1); }
@@ -609,30 +637,26 @@
         async function saveRating() {
             if(!activeRatingId || !currentUser) return; const val = parseFloat(document.getElementById('rating-slider').value);
             
-            const item = trackerDataCache.find(i=>i.tmdb_id===activeRatingId); if(item) item.user_rating = val; 
+            const item = trackerDataCache.find(i => i.id === activeRatingId); if(item) item.user_rating = val; 
             localStorage.setItem('ct_tracker_'+currentUser.id, JSON.stringify(trackerDataCache));
             renderTrackerData(); closeLayerProgrammatically(); showToast("Rating disimpan!");
 
-            if(navigator.onLine) await window.supabaseClient.from('ct_watch_history').update({ user_rating: val }).eq('user_id', currentUser.id).eq('tmdb_id', activeRatingId);
+            if(navigator.onLine) await window.supabaseClient.from('ct_watch_history').update({ user_rating: val }).eq('id', activeRatingId);
         }
 
         function executeExitApp() { if (navigator.app) { navigator.app.exitApp(); } else if (navigator.device) { navigator.device.exitApp(); } else { window.close(); } }
 
-        function showDeleteModal(tmdbId, title) { openLayer('delete'); pendingDeleteId = tmdbId; document.getElementById('delete-modal-desc').innerText = `Yakin ingin menghapus "${title}"?`; document.getElementById('delete-modal-overlay').classList.add('active'); }
-        
+        function showDeleteModal(dbUniqueId, title) { openLayer('delete'); pendingDeleteId = dbUniqueId; document.getElementById('delete-modal-desc').innerText = `Yakin ingin menghapus "${title}"?`; document.getElementById('delete-modal-overlay').classList.add('active'); }
         async function executeDeleteMovie() {
             if(!pendingDeleteId) return; const idToDel = pendingDeleteId; closeLayerProgrammatically(); 
             
-            const el = document.querySelector(`.list-item[data-id="${idToDel}"]`); if(el) { el.style.opacity = '0'; setTimeout(() => el.remove(), 300); }
+            const el = document.querySelector(`.list-item[data-unique-id="${idToDel}"]`); if(el) { el.style.opacity = '0'; setTimeout(() => el.remove(), 300); }
             
-            // PERBAIKAN: Hapus dari local storage dulu agar langsung hilang dari pandangan
-            trackerDataCache = trackerDataCache.filter(item => item.tmdb_id != idToDel); 
+            trackerDataCache = trackerDataCache.filter(item => item.id !== idToDel); 
             localStorage.setItem('ct_tracker_'+currentUser.id, JSON.stringify(trackerDataCache));
             calculateWatchTime(trackerDataCache, 'stat-watchtime'); showToast("Dihapus!"); updateAllBadges();
             
-            if(navigator.onLine) {
-                await window.supabaseClient.from('ct_watch_history').delete().eq('user_id', currentUser.id).eq('tmdb_id', idToDel);
-            }
+            if(navigator.onLine) await window.supabaseClient.from('ct_watch_history').delete().eq('id', idToDel);
         }
 
         // --- 10. SUPABASE INIT & OFFLINE CACHE ---
@@ -664,14 +688,12 @@
             }
 
             if(!navigator.onLine) return; 
-
             const { data } = await window.supabaseClient.from('ct_profiles').select('avatar_url, username, custom_folders').eq('id', userId).single();
             if(data) {
                 localStorage.setItem('ct_profile_'+userId, JSON.stringify(data));
                 document.getElementById(imgElementId).src = (data && data.avatar_url) ? data.avatar_url : `https://ui-avatars.com/api/?name=${data?.username||'User'}&background=007aff&color=fff&size=200`;
                 if (userId === currentUser?.id) { userFolders = data?.custom_folders || []; updateFolderDropdowns(); }
             }
-            return data;
         }
 
         async function checkSession() {
@@ -679,11 +701,12 @@
             if (data && data.session) {
                 currentUser = data.session.user; document.getElementById('auth-section').style.display = 'none'; document.getElementById('user-section').style.display = 'block';
                 document.getElementById('display-username').innerText = "@" + currentUser.email.split('@')[0];
-                await fetchUserProfile(currentUser.id, 'profile-avatar'); fetchFriends();
-                if (currentPage === 'tracker' || currentPage === 'profile') fetchAndRenderTracker(); 
+                
+                await fetchUserProfile(currentUser.id, 'profile-avatar'); 
+                fetchFriends();
+                fetchAndRenderTracker(); // Perbaikan Masalah 1: Otomatis load data di background saat pertama buka aplikasi.
             } else {
                 currentUser = null; document.getElementById('auth-section').style.display = 'block'; document.getElementById('user-section').style.display = 'none';
-                
                 const trackerContent = document.getElementById('tracker-content');
                 if (trackerContent) trackerContent.innerHTML = '<div class="auth-container" style="text-align:center;"><p style="color:#8e8e93;">Silakan login di tab Profile.</p></div>';
             }
@@ -712,7 +735,7 @@
             await checkSession(); updateAllBadges();
         }
 
-        // --- 11. TRACKER LOKAL & FOLDER BERSARANG ---
+        // --- 11. TRACKER LOKAL, FOLDER & SEASON TRACKING ---
         function setFilter(filterType, btnElement) { 
             currentFilter = filterType; document.querySelectorAll('#page-tracker .segmented-btn').forEach(btn => btn.classList.remove('active')); 
             if(btnElement) btnElement.classList.add('active'); 
@@ -767,33 +790,41 @@
 
         function openFolder(fPath) { openLayer('dir_' + fPath); activeFolderName = fPath; currentFilter = 'folder_view'; renderTrackerData(); }
 
-        async function saveToTracker(status) {
+        // Fungsi khusus simpan per-season (Penyelesaian Masalah 2 & 3)
+        async function saveSeasonToTracker(status, seasonNum, runtime, seasonName) {
+            const seasonData = { isSeason: true, seasonNum: seasonNum, runtime: runtime, seasonName: seasonName };
+            saveToTracker(status, seasonData);
+        }
+
+        async function saveToTracker(status, seasonData = null) {
             if(!currentUser) { showToast("Login dulu!", "error"); closeLayerProgrammatically(); switchPageVisual('profile'); return; }
             const chosenFolder = document.getElementById('sheet-folder-select').value; const folderVal = chosenFolder === "" ? null : chosenFolder;
             
-            const existingIndex = trackerDataCache.findIndex(i => i.tmdb_id == selectedMovie.id);
+            const isSeason = seasonData && seasonData.isSeason;
+            const targetMediaType = isSeason ? `tv_season_${seasonData.seasonNum}` : selectedMovie.media_type;
+            const targetTitle = isSeason ? `${selectedMovie.title} - ${seasonData.seasonName}` : selectedMovie.title;
+            const targetRuntime = isSeason ? seasonData.runtime : (selectedMovie.runtime || 0);
+
+            // Cek existensi menggunakan tmdb_id & media_type
+            const existingIndex = trackerDataCache.findIndex(i => i.tmdb_id === selectedMovie.id && i.media_type === targetMediaType);
             
-            // PERBAIKAN: Lakukan Optimistic Update (update langsung di layar HP)
+            // Optimistic Update Lokal
             if(existingIndex > -1) { 
                 trackerDataCache[existingIndex] = {...trackerDataCache[existingIndex], status: status, folder_name: folderVal}; 
             } else { 
-                const localItem = { id: Date.now(), user_id: currentUser.id, tmdb_id: selectedMovie.id, media_type: selectedMovie.media_type, title: selectedMovie.title, poster_path: selectedMovie.poster_path, status: status, runtime: selectedMovie.runtime || 0, custom_order: Date.now(), folder_name: folderVal, created_at: new Date().toISOString() };
+                const localItem = { id: Date.now(), user_id: currentUser.id, tmdb_id: selectedMovie.id, media_type: targetMediaType, title: targetTitle, poster_path: selectedMovie.poster_path, status: status, runtime: targetRuntime, custom_order: Date.now(), folder_name: folderVal, created_at: new Date().toISOString() };
                 trackerDataCache.unshift(localItem); 
             }
             
             localStorage.setItem('ct_tracker_'+currentUser.id, JSON.stringify(trackerDataCache));
             showToast("Tersimpan!"); closeLayerProgrammatically(); renderTrackerData(); calculateWatchTime(trackerDataCache, 'stat-watchtime'); updateAllBadges();
 
-            // PERBAIKAN: Cek manual ke server alih-alih memakai 'upsert' yang rentan error di Supabase
             if(navigator.onLine) {
-                const { data: existDb } = await window.supabaseClient.from('ct_watch_history').select('id').eq('user_id', currentUser.id).eq('tmdb_id', selectedMovie.id).maybeSingle();
-                
+                const { data: existDb } = await window.supabaseClient.from('ct_watch_history').select('id').eq('user_id', currentUser.id).eq('tmdb_id', selectedMovie.id).eq('media_type', targetMediaType).maybeSingle();
                 if (existDb) {
-                    // Update server diam-diam
-                    await window.supabaseClient.from('ct_watch_history').update({ status: status, folder_name: folderVal, runtime: selectedMovie.runtime || 0 }).eq('id', existDb.id);
+                    await window.supabaseClient.from('ct_watch_history').update({ status: status, folder_name: folderVal, runtime: targetRuntime }).eq('id', existDb.id);
                 } else {
-                    // Insert server (ID otomatis diurus Supabase)
-                    const dbItem = { user_id: currentUser.id, tmdb_id: selectedMovie.id, media_type: selectedMovie.media_type, title: selectedMovie.title, poster_path: selectedMovie.poster_path, status: status, runtime: selectedMovie.runtime || 0, custom_order: Date.now(), folder_name: folderVal };
+                    const dbItem = { user_id: currentUser.id, tmdb_id: selectedMovie.id, media_type: targetMediaType, title: targetTitle, poster_path: selectedMovie.poster_path, status: status, runtime: targetRuntime, custom_order: Date.now(), folder_name: folderVal };
                     await window.supabaseClient.from('ct_watch_history').insert([dbItem]);
                 }
             }
@@ -827,7 +858,8 @@
             if(!navigator.onLine) return;
             let needsRender = false;
             for(let item of dataArray) {
-                if(item.runtime === null || item.runtime === 0) {
+                // Perbaikan: Jangan hit TMDB terus menerus, abaikan season yang dibuat lokal 
+                if((item.runtime === null || item.runtime === 0) && !item.media_type.startsWith('tv_season_')) {
                     try {
                         const res = await fetch(`${BASE_URL}/${item.media_type}/${item.tmdb_id}?api_key=${TMDB_API_KEY}`); const detail = await res.json();
                         let r = detail.runtime || (detail.episode_run_time && detail.episode_run_time[0]) || 0;
@@ -835,6 +867,7 @@
                             const tvm = await fetch(`https://api.tvmaze.com/singlesearch/shows?q=${encodeURIComponent(item.title)}`);
                             if(tvm.ok) { const tvd = await tvm.json(); r = tvd.averageRuntime || tvd.runtime || 0; }
                         }
+                        if (r === 0) r = item.media_type === 'tv' ? 45 : 120; // Default force jika tidak ketemu
                         item.runtime = r; await window.supabaseClient.from('ct_watch_history').update({runtime: r}).eq('id', item.id); needsRender = true;
                     } catch(e){}
                 }
@@ -891,14 +924,18 @@
             else if(sortType === 'custom') sortedData.sort((a,b) => (b.custom_order || 0) - (a.custom_order || 0));
 
             sortedData.forEach(item => {
-                const div = document.createElement('div'); div.className = 'list-item'; div.dataset.id = item.tmdb_id;
+                const div = document.createElement('div'); div.className = 'list-item'; 
+                div.dataset.uniqueId = item.id; // Identifier unik utama untuk hapus/edit (Perbaikan Masalah 3)
+                
                 const r = parseFloat(item.user_rating || 0).toFixed(1);
                 let statusHtml = ''; if(item.status === 'watched') statusHtml = `<i class="fas fa-check-circle"></i> Selesai`; else if(item.status === 'favorite') statusHtml = `<i class="fas fa-heart"></i> Favorit`; else statusHtml = `<i class="fas fa-clock"></i> Nanti`;
                 let statusColor = item.status === 'watched' ? '#34c759' : (item.status === 'favorite' ? '#ff2d55' : '#ff9500');
 
-                const encodedData = encodeURIComponent(JSON.stringify({ id: item.tmdb_id, title: item.title, poster_path: item.poster_path, media_type: item.media_type, runtime: item.runtime }));
-                div.onclick = function() { openSheetFromEncoded(encodedData); }; div.style.cursor = 'pointer';
+                // Konversi kembali ID Series asli agar detail di bottom sheet normal jika diklik 
+                const originalMediaType = item.media_type.startsWith('tv_season_') ? 'tv' : item.media_type;
+                const encodedData = encodeURIComponent(JSON.stringify({ id: item.tmdb_id, title: item.title.split(' - Season')[0], poster_path: item.poster_path, media_type: originalMediaType, runtime: item.runtime }));
                 
+                div.onclick = function() { openSheetFromEncoded(encodedData); }; div.style.cursor = 'pointer';
                 const safeTitle = item.title.replace(/'/g, "\\'").replace(/"/g, '&quot;');
                 
                 div.innerHTML = `
@@ -906,9 +943,9 @@
                     <div style="flex:1; text-align:left;">
                         <div style="font-weight:700; font-size:15px; margin-bottom: 3px;">${item.title}</div>
                         <div style="font-size:12px; color:${statusColor};">${statusHtml} • ${formatRuntime(item.runtime)}</div>
-                        <div class="rating-pill" onclick="event.stopPropagation(); openRatingModal(${item.tmdb_id}, ${item.user_rating})"><i class="fas fa-star"></i> ${r}/10</div>
+                        <div class="rating-pill" onclick="event.stopPropagation(); openRatingModal(${item.id}, ${item.user_rating})"><i class="fas fa-star"></i> ${r}/10</div>
                     </div>
-                    ${sortType === 'custom' ? '<i class="fas fa-bars drag-handle" onclick="event.stopPropagation()"></i>' : `<i class="fas fa-trash-alt" style="color:#ff3b30; padding:10px; cursor:pointer;" onclick="event.stopPropagation(); showDeleteModal(${item.tmdb_id}, '${safeTitle}')"></i>`}
+                    ${sortType === 'custom' ? '<i class="fas fa-bars drag-handle" onclick="event.stopPropagation()"></i>' : `<i class="fas fa-trash-alt" style="color:#ff3b30; padding:10px; cursor:pointer;" onclick="event.stopPropagation(); showDeleteModal(${item.id}, '${safeTitle}')"></i>`}
                 `;
                 container.appendChild(div);
             });
@@ -919,12 +956,12 @@
                     handle: '.drag-handle', animation: 150, forceFallback: true, fallbackClass: "sortable-fallback",
                     onEnd: async function (evt) {
                         const movedEl = evt.item; const prevEl = movedEl.previousElementSibling; const nextEl = movedEl.nextElementSibling; let newOrder = Date.now();
-                        if(prevEl && nextEl && prevEl.dataset.id && nextEl.dataset.id) { const pOrder = parseFloat(trackerDataCache.find(i=>i.tmdb_id == prevEl.dataset.id).custom_order || 0); const nOrder = parseFloat(trackerDataCache.find(i=>i.tmdb_id == nextEl.dataset.id).custom_order || 0); newOrder = (pOrder + nOrder) / 2; } 
-                        else if(prevEl && prevEl.dataset.id) { newOrder = parseFloat(trackerDataCache.find(i=>i.tmdb_id == prevEl.dataset.id).custom_order || 0) - 10; } 
-                        else if(nextEl && nextEl.dataset.id) { newOrder = parseFloat(trackerDataCache.find(i=>i.tmdb_id == nextEl.dataset.id).custom_order || 0) + 10; }
-                        trackerDataCache.find(i=>i.tmdb_id == movedEl.dataset.id).custom_order = newOrder;
+                        if(prevEl && nextEl && prevEl.dataset.uniqueId && nextEl.dataset.uniqueId) { const pOrder = parseFloat(trackerDataCache.find(i=>i.id == prevEl.dataset.uniqueId).custom_order || 0); const nOrder = parseFloat(trackerDataCache.find(i=>i.id == nextEl.dataset.uniqueId).custom_order || 0); newOrder = (pOrder + nOrder) / 2; } 
+                        else if(prevEl && prevEl.dataset.uniqueId) { newOrder = parseFloat(trackerDataCache.find(i=>i.id == prevEl.dataset.uniqueId).custom_order || 0) - 10; } 
+                        else if(nextEl && nextEl.dataset.uniqueId) { newOrder = parseFloat(trackerDataCache.find(i=>i.id == nextEl.dataset.uniqueId).custom_order || 0) + 10; }
+                        trackerDataCache.find(i=>i.id == movedEl.dataset.uniqueId).custom_order = newOrder;
                         localStorage.setItem('ct_tracker_'+currentUser.id, JSON.stringify(trackerDataCache));
-                        if(navigator.onLine) { const dbId = trackerDataCache.find(i=>i.tmdb_id == movedEl.dataset.id).id; window.supabaseClient.from('ct_watch_history').update({ custom_order: newOrder }).eq('id', dbId); }
+                        if(navigator.onLine) { window.supabaseClient.from('ct_watch_history').update({ custom_order: newOrder }).eq('id', movedEl.dataset.uniqueId); }
                     }
                 });
             }
@@ -1056,7 +1093,22 @@
                 let statusHtml = ''; if(item.status === 'watched') statusHtml = `Selesai`; else if(item.status === 'favorite') statusHtml = `Favorit`; else statusHtml = `Nanti Saja`;
                 let statusColor = item.status === 'watched' ? '#34c759' : (item.status === 'favorite' ? '#ff2d55' : '#ff9500');
 
-                const encodedData = encodeURIComponent(JSON.stringify({ id: item.tmdb_id, title: item.title, poster_path: item.poster_path, media_type: item.media_type, runtime: item.runtime }));
+                // Lintas Sinkronisasi Profil: Cek status film teman di database lokal (Penyelesaian Masalah 4)
+                let myStatusHtml = '';
+                if (trackerDataCache && trackerDataCache.length > 0) {
+                    const myItem = trackerDataCache.find(i => i.tmdb_id === item.tmdb_id && i.media_type === item.media_type);
+                    if (myItem) {
+                        let textStatus = myItem.status === 'watched' ? '<i class="fas fa-check-circle"></i> Sudah di Tonton' : (myItem.status === 'favorite' ? '<i class="fas fa-heart"></i> Favoritmu' : '<i class="fas fa-clock"></i> Ada di Nanti');
+                        let folderStatus = myItem.folder_name ? ` • Folder: ${myItem.folder_name.split('/').pop()}` : '';
+                        myStatusHtml = `<div style="font-size:11px; margin-top:8px; padding-top:8px; border-top:1px dashed #e3e3e8; color:var(--accent); font-weight:600;">${textStatus}${folderStatus}</div>`;
+                    } else {
+                        myStatusHtml = `<div style="font-size:11px; margin-top:8px; padding-top:8px; border-top:1px dashed #e3e3e8; color:var(--text-muted);">Belum kamu tambahkan</div>`;
+                    }
+                }
+
+                const originalMediaType = item.media_type.startsWith('tv_season_') ? 'tv' : item.media_type;
+                const encodedData = encodeURIComponent(JSON.stringify({ id: item.tmdb_id, title: item.title.split(' - Season')[0], poster_path: item.poster_path, media_type: originalMediaType, runtime: item.runtime }));
+                
                 div.onclick = function() { openSheetFromEncoded(encodedData); }; div.style.cursor = 'pointer';
                 div.innerHTML = `
                     <img src="${IMG_URL + item.poster_path}" style="width:60px; height:90px; object-fit:cover; border-radius:8px; margin-right:15px; background:#e3e3e8;">
@@ -1064,7 +1116,8 @@
                         <div style="font-weight:700; font-size:15px; margin-bottom: 3px;">${item.title}</div>
                         <div style="font-size:12px; color:${statusColor};">${statusHtml} • ${formatRuntime(item.runtime)}</div>
                         <div class="rating-pill"><i class="fas fa-star"></i> ${r}/10</div>
-                    </div><i class="fas fa-chevron-right" style="color:#c7c7cc;"></i>
+                        ${myStatusHtml}
+                    </div><i class="fas fa-chevron-right" style="color:#c7c7cc; margin-left:5px;"></i>
                 `;
                 container.appendChild(div);
             });
