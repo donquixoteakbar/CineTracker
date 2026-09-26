@@ -51,7 +51,7 @@
         .movie-card img { width: 100%; aspect-ratio: 2/3; border-radius: 12px; object-fit: cover; box-shadow: 0 4px 10px rgba(0,0,0,0.1); background: #e3e3e8;}
         .movie-card .title { font-size: 13px; font-weight: 600; margin-top: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         
-        /* INDIKATOR BADGE FILM (EXPLORE) */
+        /* INDIKATOR BADGE FILM */
         .card-badge { position: absolute; top: 6px; right: 6px; background: rgba(0,0,0,0.7); border-radius: 50%; width: 22px; height: 22px; display: flex; justify-content: center; align-items: center; font-size: 11px; z-index: 5; backdrop-filter: blur(4px); box-shadow: 0 2px 5px rgba(0,0,0,0.3); }
         .card-badge.watched { color: #34c759; }
         .card-badge.favorite { color: #ff2d55; }
@@ -141,13 +141,20 @@
     <div id="offline-banner">Memuat data Offline. Periksa koneksi internetmu.</div>
     <div id="ios-toast" class="toast"><i class="fas fa-check-circle" style="color:#34c759; font-size:18px;"></i><span id="toast-message">Berhasil</span></div>
 
-    <!-- MODAL EXIT -->
+    <!-- MODAL CUSTOM UMUM -->
+    <div class="custom-modal-overlay" id="delete-modal-overlay">
+        <div class="custom-modal">
+            <div class="custom-modal-title">Hapus Film?</div>
+            <div class="custom-modal-desc" id="delete-modal-desc">Yakin ingin menghapus film ini dari daftarmu?</div>
+            <div class="custom-modal-actions"><button class="custom-modal-btn" onclick="closeLayerProgrammatically()">Batal</button><button class="custom-modal-btn danger" onclick="executeDeleteMovie()">Hapus</button></div>
+        </div>
+    </div>
+
     <div class="custom-modal-overlay" id="exit-modal-overlay">
         <div class="custom-modal">
             <div class="custom-modal-title">Keluar Aplikasi?</div>
             <div class="custom-modal-desc">Apakah kamu yakin ingin keluar dari CineTracker?</div>
             <div class="custom-modal-actions">
-                <!-- Tidak menggunakan history.back() agar stack aman -->
                 <button class="custom-modal-btn" onclick="closeExitModalVisual()">Tidak</button>
                 <button class="custom-modal-btn danger" onclick="executeExitApp()">Ya, Keluar</button>
             </div>
@@ -273,7 +280,6 @@
                 <div style="text-align: left; padding-top: 15px; border-top: 1px solid #e3e3e8;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                         <h4 style="margin: 0; font-size: 16px;">Daftar Teman</h4>
-                        <!-- Panggil fungsi visual pencarian teman -->
                         <button onclick="openSearchFriendModal()" style="background: none; border: none; color: var(--accent); font-weight: 600; font-size: 14px; cursor:pointer;"><i class="fas fa-search"></i> Cari Akun</button>
                     </div>
 
@@ -285,7 +291,6 @@
 
     <!-- Navigasi Bawah -->
     <div class="bottom-nav">
-        <!-- Klik tab memanggil fungsi visual, tanpa menyentuh history.back() -->
         <div class="nav-item active" onclick="switchPageVisual('home', this)"><i class="fas fa-compass"></i><span>Explore</span></div>
         <div class="nav-item" onclick="switchPageVisual('tracker', this)"><i class="fas fa-check-double"></i><span>Tracker</span></div>
         <div class="nav-item" onclick="switchPageVisual('profile', this)"><i class="fas fa-user"></i><span>Profile</span></div>
@@ -323,7 +328,7 @@
     <div id="friend-panel" style="position:fixed; top:0; left:0; width:100%; height:100%; background:var(--bg-color); z-index:2500; transform:translateX(100%); transition:transform 0.4s cubic-bezier(0.36, 0.66, 0.04, 1); overflow-y:auto; padding-bottom: 40px;">
         <div style="background: white; padding: 20px; padding-top: max(20px, env(safe-area-inset-top)); display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e3e3e8; position: sticky; top: 0; z-index: 10;">
             <div style="display:flex; align-items:center;">
-                <!-- Tombol KEMBALI Teman memanggil fungsi TUTUP PANEL murni -->
+                <!-- Tombol KEMBALI Teman memanggil fungsi TUTUP PANEL VISUAL -->
                 <i class="fas fa-chevron-left" onclick="closeFriendPanelVisual()" style="font-size: 20px; color: var(--accent); padding-right: 15px; cursor: pointer;"></i>
                 <h2 style="margin: 0; font-size: 20px;">Profil Teman</h2>
             </div>
@@ -334,7 +339,7 @@
             <div class="avatar-wrapper" style="margin-bottom: 10px;"><img src="" id="friend-panel-avatar" class="avatar-img"></div>
             <h3 id="friend-panel-username" style="margin-top:0; font-size: 24px;">@username</h3>
             
-            <div style="display:flex; justify-content:space-around; margin-top: 15px; padding-top: 15px; border-top: 1px solid #e3e3e8;">
+            <div style="display:flex; justify-content:space-around; margin: 20px 0 10px 0; padding: 15px 0; border-top: 1px solid #e3e3e8;">
                 <div><div style="font-size:20px; font-weight:bold; color:var(--accent);" id="friend-stat-watched">0</div><div style="font-size:11px; color:var(--text-muted);">Selesai</div></div>
                 <div><div style="font-size:20px; font-weight:bold; color:#ff2d55;" id="friend-stat-favorite">0</div><div style="font-size:11px; color:var(--text-muted);">Favorit</div></div>
                 <div><div style="font-size:20px; font-weight:bold; color:#ff9500;" id="friend-stat-watchlist">0</div><div style="font-size:11px; color:var(--text-muted);">Nanti Saja</div></div>
@@ -363,7 +368,7 @@
                 <option value="za">Z - A (Judul)</option>
             </select>
         </div>
-        <p style="text-align:center; font-size: 12px; color: var(--text-muted); margin: 0 20px;">Tekan film untuk melihat detail.</p>
+        <p style="text-align:center; font-size: 12px; color: var(--text-muted); margin: 0 20px;">Tekan film untuk menyalin ke tracker-mu.</p>
         <div id="friend-tracker-content" style="margin: 10px 20px;"></div>
     </div>
 
@@ -388,8 +393,7 @@
             return `${m} Mnt`;
         }
 
-        // --- SISTEM JEMBATAN ANDROID (TANGKAPAN TOMBOL KEMBALI) ---
-        // PENTING: Fungsi ini dipanggil oleh Sketchware untuk mencegah Force Close.
+        // --- SISTEM JEMBATAN ANDROID NATIVE (Sesuai Panduan Gambar) ---
         window.checkCanExitApp = function() {
             if (document.getElementById('crop-modal').style.display === 'flex') { closeCropVisual(); return false; }
             if (document.getElementById('rating-overlay').classList.contains('active')) { closeRatingVisual(); return false; }
@@ -400,20 +404,19 @@
             if (activeFolderName !== "") { goBackToFolder(); return false; }
             if (document.getElementById('friend-panel').style.transform === 'translateX(0px)' || document.getElementById('friend-panel').style.transform === 'translateX(0)') { closeFriendPanelVisual(); return false; }
             if (currentPage !== 'home') { switchPageVisual('home', document.querySelectorAll('.nav-item')[0]); return false; }
-            return true; // Hanya boleh keluar jika semuanya sudah tertutup (kembali True ke Java Android)
+            return true; // Boleh keluar ke sistem Android
         };
 
-        // Fallback untuk Browser / PWA (PushState)
+        // Fallback untuk eksekusi di browser PC/iOS
         window.addEventListener('popstate', function(e) {
             const canExit = window.checkCanExitApp();
             if (!canExit) { history.pushState(null, '', window.location.pathname); } 
             else { document.getElementById('exit-modal-overlay').classList.add('active'); history.pushState(null, '', window.location.pathname); }
         });
 
-        // --- FUNGSI PENUTUPAN VISUAL MURNI (TANPA HISTORY.BACK) ---
-        function closeLayerVisual(layerId) {
-            if(layerId === 'search_friend') document.getElementById('search-friend-modal').classList.remove('active');
-        }
+        // --- FUNGSI PENUTUPAN VISUAL MURNI ---
+        function closeLayerProgrammatically() { window.checkCanExitApp(); }
+        function closeLayerVisual(layerId) { if(layerId === 'search_friend') document.getElementById('search-friend-modal').classList.remove('active'); }
         function closeCropVisual() { document.getElementById('crop-modal').style.display = 'none'; if(cropper) cropper.destroy(); }
         function closeSheetVisual() { document.getElementById('sheet-overlay').classList.remove('active'); document.getElementById('movie-sheet').classList.remove('active'); }
         function closeRatingVisual() { document.getElementById('rating-overlay').classList.remove('active'); document.getElementById('rating-sheet').classList.remove('active'); activeRatingId = null; }
@@ -434,7 +437,7 @@
         let currentUser = null; let userFolders = []; let friendFolders = []; let myFriends = []; let activeFriendProfile = null;
         let selectedMovie = null; let trackerDataCache = []; let friendTrackerCache = [];
         let currentFilter = 'all'; let activeFolderName = ''; let friendFilter = 'all'; let friendActiveFolder = '';
-        let activeRatingId = null; let cropper = null; let sortableInstance = null; let isSearchOpen = false;
+        let activeRatingId = null; let cropper = null; let sortableInstance = null; let pendingDeleteId = null; let isSearchOpen = false;
 
         function getMovieBadge(tmdbId) {
             const item = trackerDataCache.find(i => i.tmdb_id == tmdbId);
@@ -557,7 +560,7 @@
                 }
 
                 selectedMovie.runtime = runtime;
-                if(overview === "") overview = "Tidak ada sinopsis yang tersedia.";
+                if(overview === "") overview = "Tidak ada sinopsis bahasa Indonesia.";
 
                 document.getElementById('sheet-meta').innerText = `${year} • ${formatRuntime(runtime)} • ${isTV ? 'TV Series' : 'Movie'}`; 
                 document.getElementById('sheet-rating').innerHTML = `<i class="fas fa-star"></i> ${rating} <span style="color:var(--text-muted); font-size:12px; font-weight:normal;">/ 10</span>`; 
@@ -568,7 +571,7 @@
 
         // --- CROPPER ---
         function initCrop(event) {
-            const file = event.target.files[0]; if (!file) return;
+            const file = event.target.files[0]; if (!file) return; 
             const reader = new FileReader();
             reader.onload = function(e) {
                 document.getElementById('crop-modal').style.display = 'flex'; const image = document.getElementById('crop-image'); image.src = e.target.result;
@@ -602,14 +605,16 @@
 
         function executeExitApp() { if (navigator.app) { navigator.app.exitApp(); } else if (navigator.device) { navigator.device.exitApp(); } else { window.close(); } }
 
-        function executeDeleteMovie() {
-            if(!confirm("Hapus dari daftarmu?")) return;
-            const idToDel = selectedMovie.id; closeSheetVisual(); 
+        function showDeleteModal(tmdbId, title) { pendingDeleteId = tmdbId; document.getElementById('delete-modal-desc').innerText = `Yakin ingin menghapus "${title}"?`; document.getElementById('delete-modal-overlay').classList.add('active'); }
+        async function executeDeleteMovie() {
+            if(!pendingDeleteId) return; const idToDel = pendingDeleteId; closeLayerVisual('delete'); 
+            
             const el = document.querySelector(`.list-item[data-id="${idToDel}"]`); if(el) { el.style.opacity = '0'; setTimeout(() => el.remove(), 300); }
             trackerDataCache = trackerDataCache.filter(item => item.tmdb_id !== idToDel); 
             localStorage.setItem('ct_tracker_'+currentUser.id, JSON.stringify(trackerDataCache));
             calculateWatchTime(trackerDataCache, 'stat-watchtime'); showToast("Dihapus!"); updateAllBadges();
-            if(navigator.onLine) window.supabaseClient.from('ct_watch_history').delete().eq('user_id', currentUser.id).eq('tmdb_id', idToDel);
+            
+            if(navigator.onLine) await window.supabaseClient.from('ct_watch_history').delete().eq('user_id', currentUser.id).eq('tmdb_id', idToDel);
         }
 
         // --- SUPABASE INIT & OFFLINE CACHE (LOCALSTORAGE) ---
@@ -631,6 +636,7 @@
         function generateDummyEmail(rawUsername) { return rawUsername.toLowerCase().replace(/\s+/g, '') + "@cinetracker.app"; }
         
         async function fetchUserProfile(userId, imgElementId) {
+            // LOAD OFFLINE CACHE FIRST
             const cacheProfile = localStorage.getItem('ct_profile_'+userId);
             if(cacheProfile) {
                 const data = JSON.parse(cacheProfile);
@@ -640,6 +646,7 @@
 
             if(!navigator.onLine) return; 
 
+            // FETCH ONLINE UPDATE
             const { data } = await window.supabaseClient.from('ct_profiles').select('avatar_url, username, custom_folders').eq('id', userId).single();
             if(data) {
                 localStorage.setItem('ct_profile_'+userId, JSON.stringify(data));
@@ -708,12 +715,14 @@
             
             let pCache = JSON.parse(localStorage.getItem('ct_profile_'+currentUser.id)) || {}; pCache.custom_folders = userFolders; localStorage.setItem('ct_profile_'+currentUser.id, JSON.stringify(pCache));
             updateFolderDropdowns(); renderTrackerData(); showToast("Dibuat!");
+            
             if(navigator.onLine) await window.supabaseClient.from('ct_profiles').update({custom_folders: userFolders}).eq('id', currentUser.id);
         }
 
         async function deleteFolder(e, folderName) {
             e.stopPropagation(); if(!confirm(`Hapus folder "${folderName}"? Film di dalamnya akan tetap ada di list utama.`)) return;
             userFolders = userFolders.filter(f => f !== folderName && !f.startsWith(folderName + '/'));
+            
             trackerDataCache.forEach(i => { if(i.folder_name && (i.folder_name === folderName || i.folder_name.startsWith(folderName + '/'))) i.folder_name = null; }); 
             localStorage.setItem('ct_tracker_'+currentUser.id, JSON.stringify(trackerDataCache));
             let pCache = JSON.parse(localStorage.getItem('ct_profile_'+currentUser.id)) || {}; pCache.custom_folders = userFolders; localStorage.setItem('ct_profile_'+currentUser.id, JSON.stringify(pCache));
@@ -737,19 +746,48 @@
         }
 
         function openFolder(fPath) { activeFolderName = fPath; currentFilter = 'folder_view'; renderTrackerData(); }
-        function goBackToFolder() { let parts = activeFolderName.split('/'); parts.pop(); activeFolderName = parts.join('/'); if(activeFolderName === "") currentFilter = 'folders'; renderTrackerData(); }
+        function goBackToFolder() {
+            let parts = activeFolderName.split('/'); parts.pop(); activeFolderName = parts.join('/');
+            if(activeFolderName === "") { currentFilter = 'folders'; }
+            renderTrackerData();
+        }
 
         async function saveToTracker(status) {
             if(!currentUser) { showToast("Login dulu!", "error"); closeSheetVisual(); switchPageVisual('profile'); return; }
             const chosenFolder = document.getElementById('sheet-folder-select').value; const folderVal = chosenFolder === "" ? null : chosenFolder;
             
             const existingIndex = trackerDataCache.findIndex(i => i.tmdb_id == selectedMovie.id);
-            const newItem = { id: Date.now(), user_id: currentUser.id, tmdb_id: selectedMovie.id, media_type: selectedMovie.media_type, title: selectedMovie.title, poster_path: selectedMovie.poster_path, status: status, runtime: selectedMovie.runtime || 0, custom_order: Date.now(), folder_name: folderVal, created_at: new Date().toISOString() };
-            if(existingIndex > -1) { trackerDataCache[existingIndex] = {...trackerDataCache[existingIndex], status: status, folder_name: folderVal}; } else { trackerDataCache.unshift(newItem); }
+            
+            // JIKA BARU, GUNAKAN PAYLOAD LENGKAP TANPA MENGUBAH RATING
+            const dbPayload = { 
+                user_id: currentUser.id, tmdb_id: selectedMovie.id, media_type: selectedMovie.media_type, title: selectedMovie.title, poster_path: selectedMovie.poster_path, status: status, runtime: selectedMovie.runtime || 0, folder_name: folderVal 
+            };
+
+            if(existingIndex > -1) { 
+                // PERBAIKAN BUG RATING RESET: Tetap gunakan rating dan urutan yang sudah ada di memori cache lokal
+                dbPayload.user_rating = trackerDataCache[existingIndex].user_rating || 0;
+                dbPayload.custom_order = trackerDataCache[existingIndex].custom_order || Date.now();
+                trackerDataCache[existingIndex] = {...trackerDataCache[existingIndex], ...dbPayload}; 
+            } else { 
+                dbPayload.user_rating = 0;
+                dbPayload.custom_order = Date.now();
+                // Data lokal kita tambahkan ID sementara (Date.now()) agar tidak error saat dirender
+                trackerDataCache.unshift({ ...dbPayload, id: Date.now(), created_at: new Date().toISOString() }); 
+            }
+
             localStorage.setItem('ct_tracker_'+currentUser.id, JSON.stringify(trackerDataCache));
             
             showToast("Tersimpan!"); closeSheetVisual(); renderTrackerData(); calculateWatchTime(trackerDataCache, 'stat-watchtime'); updateAllBadges();
-            if(navigator.onLine) await window.supabaseClient.from('ct_watch_history').upsert(newItem, { onConflict: 'user_id, tmdb_id' });
+
+            if(navigator.onLine) {
+                // Upsert ke Supabase menggunakan Payload Bersih
+                const { error } = await window.supabaseClient.from('ct_watch_history').upsert(dbPayload, { onConflict: 'user_id, tmdb_id' });
+                if(!error) {
+                    // Update Cache Lokal secara transparan (mendapatkan UUID asli dari Supabase)
+                    const { data } = await window.supabaseClient.from('ct_watch_history').select('*').eq('user_id', currentUser.id);
+                    if (data) { trackerDataCache = data; localStorage.setItem('ct_tracker_'+currentUser.id, JSON.stringify(trackerDataCache)); }
+                }
+            }
         }
 
         async function fetchAndRenderTracker() {
@@ -808,27 +846,37 @@
                 else { const parentName = activeFolderName.split('/').pop(); document.getElementById('tracker-list-title').innerHTML = `<span style="color:var(--accent); cursor:pointer;" onclick="goBackToFolder()"><i class="fas fa-arrow-left"></i> ${parentName}</span>`; }
 
                 container.innerHTML = `<button class="btn-primary" style="margin-bottom:20px;" onclick="createFolder()"><i class="fas fa-plus"></i> ${activeFolderName === "" ? "Buat Folder Baru" : "Buat Sub-Folder"}</button>`;
+                
                 const subs = getDirectSubfolders(activeFolderName, userFolders);
                 subs.forEach(f => {
                     const folderNameUI = f.split('/').pop(); const count = trackerDataCache.filter(i => i.folder_name === f || (i.folder_name && i.folder_name.startsWith(f + '/'))).length;
                     container.innerHTML += `<div class="folder-card" onclick="openFolder('${f}')"><div class="folder-icon-box"><i class="fas fa-folder"></i></div><div class="folder-title">${folderNameUI} <span style="font-size:12px; color:var(--text-muted); display:block; font-weight:normal;">${count} Film</span></div><i class="fas fa-trash-alt" style="color:#ff3b30; padding:10px;" onclick="deleteFolder(event, '${f}')"></i></div>`;
                 });
 
-                displayedData = trackerDataCache.filter(i => { if (activeFolderName === "") return false; else return i.folder_name === activeFolderName; });
-                if (subs.length === 0 && displayedData.length === 0) { container.innerHTML += `<p style="color:#8e8e93; text-align:center;">Kosong.</p>`; return; }
-                if (displayedData.length > 0) renderMovieList(displayedData, container, document.getElementById('sort-tracker').value);
+                displayedData = trackerDataCache.filter(i => {
+                    if (activeFolderName === "") return false;
+                    else return i.folder_name === activeFolderName;
+                });
+
+                if (subs.length === 0 && displayedData.length === 0) { 
+                    container.innerHTML += `<p style="color:#8e8e93; text-align:center;">Kosong.</p>`; return; 
+                }
             } else {
-                document.getElementById('sort-tracker').style.display = 'block'; document.getElementById('tracker-list-title').innerText = "Koleksi Film";
+                document.getElementById('sort-tracker').style.display = 'block';
+                document.getElementById('tracker-list-title').innerText = "Koleksi Film";
                 displayedData = trackerDataCache.filter(item => currentFilter === 'all' || item.status === currentFilter);
                 if (displayedData.length === 0) { container.innerHTML = `<p style="color:#8e8e93;">Belum ada film di tab ini.</p>`; return; }
-                renderMovieList(displayedData, container, document.getElementById('sort-tracker').value);
             }
+
+            renderMovieList(displayedData, container, document.getElementById('sort-tracker').value);
         }
 
         function renderMovieList(displayedData, container, sortType) {
             let sortedData = [...displayedData];
             if(sortType === 'newest') sortedData.sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
+            else if(sortType === 'oldest') sortedData.sort((a,b) => new Date(a.created_at) - new Date(b.created_at));
             else if(sortType === 'az') sortedData.sort((a,b) => a.title.localeCompare(b.title));
+            else if(sortType === 'za') sortedData.sort((a,b) => b.title.localeCompare(a.title));
             else if(sortType === 'duration_desc') sortedData.sort((a,b) => (b.runtime || 0) - (a.runtime || 0));
             else if(sortType === 'rating_desc') sortedData.sort((a,b) => (b.user_rating || 0) - (a.user_rating || 0));
             else if(sortType === 'custom') sortedData.sort((a,b) => (b.custom_order || 0) - (a.custom_order || 0));
@@ -848,7 +896,7 @@
                         <div style="font-size:12px; color:${statusColor};">${statusHtml} • ${formatRuntime(item.runtime)}</div>
                         <div class="rating-pill" onclick="event.stopPropagation(); openRatingModal(${item.tmdb_id}, ${item.user_rating})"><i class="fas fa-star"></i> ${r}/10</div>
                     </div>
-                    ${sortType === 'custom' ? '<i class="fas fa-bars drag-handle" onclick="event.stopPropagation()"></i>' : `<i class="fas fa-trash-alt" style="color:#ff3b30; padding:10px; cursor:pointer;" onclick="event.stopPropagation(); executeDeleteMovie()"></i>`}
+                    ${sortType === 'custom' ? '<i class="fas fa-bars drag-handle" onclick="event.stopPropagation()"></i>' : `<i class="fas fa-trash-alt" style="color:#ff3b30; padding:10px; cursor:pointer;" onclick="event.stopPropagation(); showDeleteModal(${item.tmdb_id}, '${item.title.replace(/'/g, "\\'")}')"></i>`}
                 `;
                 container.appendChild(div);
             });
@@ -870,7 +918,7 @@
             }
         }
 
-        // --- DAFTAR TEMAN OFFLINE ---
+        // --- 12. DAFTAR TEMAN OFFLINE & PROFIL TEMAN ---
         async function fetchFriends() {
             const cacheFriends = localStorage.getItem('ct_friends_'+currentUser.id);
             if(cacheFriends) { myFriends = JSON.parse(cacheFriends); renderFriends(); }
@@ -947,7 +995,11 @@
         }
 
         function openFriendFolder(fPath) { friendActiveFolder = fPath; friendFilter = 'folder_view'; renderFriendTrackerData(); }
-        function goBackToFriendFolder() { let parts = friendActiveFolder.split('/'); parts.pop(); friendActiveFolder = parts.join('/'); if(friendActiveFolder === "") friendFilter = 'folders'; renderFriendTrackerData(); }
+        function goBackToFriendFolder() {
+            let parts = friendActiveFolder.split('/'); parts.pop(); friendActiveFolder = parts.join('/');
+            if(friendActiveFolder === "") { friendFilter = 'folders'; }
+            renderFriendTrackerData();
+        }
 
         function renderFriendTrackerData() {
             const container = document.getElementById('friend-tracker-content'); container.innerHTML = '';
