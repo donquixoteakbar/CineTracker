@@ -168,7 +168,6 @@
         .custom-modal-btn.bold { font-weight: 600; }
         .custom-modal-btn.danger { color: var(--danger); }
         
-        /* If actions are stacked vertically */
         .custom-modal-actions.vertical { flex-direction: column; }
         .custom-modal-actions.vertical .custom-modal-btn { border-bottom: 0.5px solid rgba(60,60,67,0.29); padding: 14px 0; }
         .custom-modal-actions.vertical .custom-modal-btn:last-child { border-bottom: none; }
@@ -190,14 +189,28 @@
     <div id="ios-toast" class="toast"><i class="fas fa-check-circle" style="color:#34c759; font-size:18px;"></i><span id="toast-message">Berhasil</span></div>
 
     <!-- MODAL CUSTOM UMUM (iOS Style) -->
-    <!-- Hapus Film -->
-    <div class="custom-modal-overlay" id="delete-modal-overlay">
+    
+    <!-- Modal Input Prompt (Buat Folder / Ganti Nama) -->
+    <div class="custom-modal-overlay" id="prompt-modal-overlay">
         <div class="custom-modal">
-            <div class="custom-modal-title">Hapus Film?</div>
-            <div class="custom-modal-desc" id="delete-modal-desc">Yakin ingin menghapus film ini dari daftarmu?</div>
+            <div class="custom-modal-title" id="prompt-title">Judul</div>
+            <div class="custom-modal-desc" id="prompt-desc">Deskripsi</div>
+            <input type="text" id="prompt-input" class="auth-input" style="width:calc(100% - 40px); margin:0 20px 20px 20px; text-align:center;">
             <div class="custom-modal-actions">
                 <button class="custom-modal-btn" style="border-right: 0.5px solid rgba(60,60,67,0.29);" onclick="closeLayerProgrammatically()">Batal</button>
-                <button class="custom-modal-btn danger bold" onclick="executeDeleteMovie()">Hapus</button>
+                <button class="custom-modal-btn bold" id="prompt-confirm-btn">Simpan</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Konfirmasi Hapus Umum -->
+    <div class="custom-modal-overlay" id="delete-modal-overlay">
+        <div class="custom-modal">
+            <div class="custom-modal-title" id="delete-modal-title">Hapus?</div>
+            <div class="custom-modal-desc" id="delete-modal-desc">Yakin ingin menghapus?</div>
+            <div class="custom-modal-actions">
+                <button class="custom-modal-btn" style="border-right: 0.5px solid rgba(60,60,67,0.29);" onclick="closeLayerProgrammatically()">Batal</button>
+                <button class="custom-modal-btn danger bold" id="delete-confirm-btn">Hapus</button>
             </div>
         </div>
     </div>
@@ -208,8 +221,8 @@
             <div class="custom-modal-title" id="fa-title" style="margin-top: 5px;">Aksi Folder</div>
             <div class="custom-modal-desc" style="color: var(--text-muted);">Pilih aksi untuk folder ini.</div>
             <div class="custom-modal-actions vertical">
-                <button class="custom-modal-btn bold" onclick="executeRenameFolder()">Ganti Nama</button>
-                <button class="custom-modal-btn danger" onclick="executeDeleteFolder()">Hapus Folder</button>
+                <button class="custom-modal-btn bold" onclick="promptRenameFolder()">Ganti Nama</button>
+                <button class="custom-modal-btn danger" onclick="promptDeleteFolder()">Hapus Folder</button>
                 <button class="custom-modal-btn" style="border-top: 6px solid #e3e3e8; font-weight:400;" onclick="closeLayerProgrammatically()">Batal</button>
             </div>
         </div>
@@ -447,6 +460,10 @@
 
     <!-- ================= LOGIKA APLIKASI ================= -->
     <script>
+        // --- UTILITAS ENKODE AMAN ANTI-KUTIP ---
+        function safeEncode(obj) { return encodeURIComponent(JSON.stringify(obj)).replace(/'/g, "%27"); }
+        function safeEncodeStr(str) { return encodeURIComponent(str).replace(/'/g, "%27"); }
+
         // --- 1. DETEKTOR OFFLINE ---
         window.addEventListener('offline', () => { document.getElementById('offline-banner').style.display = 'block'; });
         window.addEventListener('online', () => { document.getElementById('offline-banner').style.display = 'none'; fetchAndRenderTracker(); });
@@ -490,6 +507,7 @@
             else if(layerId === 'rating') { document.getElementById('rating-overlay').classList.remove('active'); document.getElementById('rating-sheet').classList.remove('active'); activeRatingId = null; }
             else if(layerId === 'delete') { document.getElementById('delete-modal-overlay').classList.remove('active'); pendingDeleteId = null; }
             else if(layerId === 'folder_action') { document.getElementById('folder-action-modal').classList.remove('active'); activeActionFolder = ""; }
+            else if(layerId === 'prompt') { document.getElementById('prompt-modal-overlay').classList.remove('active'); }
             else if(layerId === 'search') { isSearchOpen = false; document.getElementById('search-input').value = ''; document.getElementById('explore-area').style.display = 'block'; document.getElementById('search-area').style.display = 'none'; document.getElementById('search-container').innerHTML = ''; }
             else if(layerId === 'friend_panel') { document.getElementById('friend-panel').style.transform = 'translateX(100%)'; }
             else if(layerId === 'search_friend') { document.getElementById('search-friend-modal').classList.remove('active'); }
@@ -573,8 +591,7 @@
                     const imgPath = item.poster_path || item.profile_path; if (!imgPath) return; 
                     const title = item.title || item.name; const card = document.createElement('div'); card.className = 'movie-card';
                     
-                    // FIXED: Encode full data object to prevent string termination issues
-                    const encodedData = encodeURIComponent(JSON.stringify({ id: item.id, title: title, poster_path: imgPath, media_type: item.media_type || (item.name ? 'tv' : 'movie') }));
+                    const encodedData = safeEncode({ id: item.id, title: title, poster_path: imgPath, media_type: item.media_type || (item.name ? 'tv' : 'movie') });
                     card.dataset.encoded = encodedData;
                     card.innerHTML = `<img src="${IMG_URL + imgPath}" alt="Poster" onclick="openSheetFromEncoded('${encodedData}')"><div class="title" onclick="openSheetFromEncoded('${encodedData}')">${title}</div>${getMovieBadge(item.id)}`;
                     container.appendChild(card);
@@ -602,7 +619,7 @@
                             const imgPath = item.poster_path || item.profile_path; if (!imgPath) return; 
                             const title = item.title || item.name; const card = document.createElement('div'); card.className = 'movie-card';
                             
-                            const encodedData = encodeURIComponent(JSON.stringify({ id: item.id, title: title, poster_path: imgPath, media_type: item.media_type || (item.name ? 'tv' : 'movie') }));
+                            const encodedData = safeEncode({ id: item.id, title: title, poster_path: imgPath, media_type: item.media_type || (item.name ? 'tv' : 'movie') });
                             card.dataset.encoded = encodedData;
                             card.innerHTML = `<img src="${IMG_URL + imgPath}" alt="Poster" onclick="openSheetFromEncoded('${encodedData}')"><div class="title" onclick="openSheetFromEncoded('${encodedData}')">${title}</div>${getMovieBadge(item.id)}`;
                             container.appendChild(card);
@@ -661,8 +678,7 @@
                             const seasonMins = epsCount * avgRuntime;
                             totalSeriesRuntime += seasonMins;
                             
-                            // FIXED: Pengamanan ekstra pada pemanggilan fungsi simpan Season
-                            const encodedSeasonName = encodeURIComponent(s.name);
+                            const encodedSeasonName = safeEncodeStr(s.name);
                             seasonsContainer.innerHTML += `
                                 <div class="season-item">
                                     <div>
@@ -705,7 +721,7 @@
             if(!error) { showToast("Foto diperbarui!"); localStorage.setItem('ct_profile_'+currentUser.id, JSON.stringify({...JSON.parse(localStorage.getItem('ct_profile_'+currentUser.id) || '{}'), avatar_url: base64Avatar})); }
         }
 
-        // --- 9. MODAL HAPUS & RATING ---
+        // --- 9. MODAL CUSTOM & RATING ---
         function openRatingModal(dbUniqueId, currentRating) {
             openLayer('rating'); activeRatingId = dbUniqueId; document.getElementById('rating-slider').value = currentRating || 0.0; updateRatingDisplay(currentRating || 0.0);
             document.getElementById('rating-overlay').classList.add('active'); document.getElementById('rating-sheet').classList.add('active');
@@ -723,10 +739,11 @@
 
         function executeExitApp() { if (navigator.app) { navigator.app.exitApp(); } else if (navigator.device) { navigator.device.exitApp(); } else { window.close(); } }
 
-        // FIXED: Memakai decodeURIComponent untuk judul agar tombol aman 100% dari syntax error HTML
         function showDeleteModal(dbUniqueId, encodedTitle) { 
             openLayer('delete'); pendingDeleteId = dbUniqueId; 
+            document.getElementById('delete-modal-title').innerText = "Hapus Film?";
             document.getElementById('delete-modal-desc').innerText = `Yakin ingin menghapus "${decodeURIComponent(encodedTitle)}" dari daftarmu?`; 
+            document.getElementById('delete-confirm-btn').onclick = executeDeleteMovie;
             document.getElementById('delete-modal-overlay').classList.add('active'); 
         }
         
@@ -818,7 +835,7 @@
             await checkSession(); updateAllBadges();
         }
 
-        // --- 11. TRACKER LOKAL, FOLDER (LONG PRESS) & SEASON TRACKING ---
+        // --- 11. TRACKER LOKAL, FOLDER (MODAL) & SEASON TRACKING ---
         function setFilter(filterType, btnElement) { 
             currentFilter = filterType; document.querySelectorAll('#page-tracker .segmented-btn').forEach(btn => btn.classList.remove('active')); 
             if(btnElement) btnElement.classList.add('active'); 
@@ -826,8 +843,21 @@
             renderTrackerData(); 
         }
 
-        async function createFolder() {
-            const childName = prompt("Nama Folder Baru:\n(Gunakan 'Induk/Anak' untuk bikin Sub-folder. Contoh: Anime/Naruto)");
+        // CUSTOM MODALS UNTUK FOLDER
+        function openCreateFolderModal() {
+            openLayer('prompt');
+            document.getElementById('prompt-title').innerText = activeFolderName === "" ? "Buat Folder Baru" : "Buat Sub-Folder";
+            document.getElementById('prompt-desc').innerText = "Masukkan nama folder di bawah ini:\n(Gunakan 'Induk/Anak' untuk sub-folder)";
+            document.getElementById('prompt-input').value = "";
+            document.getElementById('prompt-confirm-btn').onclick = async function() {
+                const val = document.getElementById('prompt-input').value;
+                closeLayerProgrammatically();
+                await executeCreateFolder(val);
+            };
+            document.getElementById('prompt-modal-overlay').classList.add('active');
+        }
+
+        async function executeCreateFolder(childName) {
             if(!childName || childName.trim() === "") return;
             const cleanName = childName.trim().replace(/\/+/g, '/').replace(/^\/|\/$/g, ''); 
             const fullPath = activeFolderName === "" ? cleanName : activeFolderName + "/" + cleanName;
@@ -837,7 +867,7 @@
                 curPath += (curPath === "" ? "" : "/") + p;
                 if(!userFolders.includes(curPath)) { userFolders.push(curPath); isUpdated = true; }
             }
-            if(!isUpdated) return showToast("Folder sudah tersedia.", "error");
+            if(!isUpdated) { showToast("Folder sudah tersedia.", "error"); return; }
             
             let pCache = JSON.parse(localStorage.getItem('ct_profile_'+currentUser.id)) || {}; pCache.custom_folders = userFolders; localStorage.setItem('ct_profile_'+currentUser.id, JSON.stringify(pCache));
             updateFolderDropdowns(); renderTrackerData(); showToast("Folder Dibuat!");
@@ -845,58 +875,61 @@
             if(navigator.onLine) await window.supabaseClient.from('ct_profiles').update({custom_folders: userFolders}).eq('id', currentUser.id);
         }
 
-        // NEW: Fitur Long Press Folder
+        // TAHAN FOLDER (LONG PRESS)
         let folderPressTimer;
         let isFolderDragging = false;
         let activeActionFolder = "";
 
-        function touchStartFolder(e, folderPath) {
+        function touchStartFolder(e, encodedPath) {
             isFolderDragging = false;
+            const folderPath = decodeURIComponent(encodedPath);
             folderPressTimer = setTimeout(() => {
                 openLayer('folder_action');
                 activeActionFolder = folderPath;
                 const folderBaseName = folderPath.split('/').pop();
                 document.getElementById('fa-title').innerText = `Folder: ${folderBaseName}`;
                 document.getElementById('folder-action-modal').classList.add('active');
-            }, 550); // 550ms lama tahan
+            }, 550); // Lama tahan
         }
         function touchMoveFolder() {
-            isFolderDragging = true;
-            clearTimeout(folderPressTimer);
+            isFolderDragging = true; clearTimeout(folderPressTimer);
         }
-        function touchEndFolder(e, folderPath) {
+        function touchEndFolder(e, encodedPath) {
             clearTimeout(folderPressTimer);
             if(!isFolderDragging && !document.getElementById('folder-action-modal').classList.contains('active')) {
-                openFolder(folderPath); // Jika klik biasa, buka folder
+                openFolder(decodeURIComponent(encodedPath)); 
             }
         }
 
-        async function executeRenameFolder() {
-            const oldPath = activeActionFolder;
-            const oldName = oldPath.split('/').pop();
-            const newNameInput = prompt(`Ubah nama folder "${oldName}" menjadi:`, oldName);
+        function promptRenameFolder() {
+            closeLayerProgrammatically(); 
+            setTimeout(() => {
+                openLayer('prompt');
+                const oldName = activeActionFolder.split('/').pop();
+                document.getElementById('prompt-title').innerText = "Ganti Nama Folder";
+                document.getElementById('prompt-desc').innerText = `Ubah nama folder "${oldName}" menjadi:`;
+                document.getElementById('prompt-input').value = oldName;
+                document.getElementById('prompt-confirm-btn').onclick = async function() {
+                    const val = document.getElementById('prompt-input').value;
+                    closeLayerProgrammatically(); await executeRenameFolder(val);
+                };
+                document.getElementById('prompt-modal-overlay').classList.add('active');
+            }, 300);
+        }
+
+        async function executeRenameFolder(newNameInput) {
+            const oldPath = activeActionFolder; const oldName = oldPath.split('/').pop();
+            if(!newNameInput || newNameInput.trim() === "" || newNameInput === oldName) return;
+            const cleanNewName = newNameInput.trim().replace(/\//g, ''); 
             
-            if(!newNameInput || newNameInput.trim() === "" || newNameInput === oldName) { closeLayerProgrammatically(); return; }
-            const cleanNewName = newNameInput.trim().replace(/\//g, ''); // cegah slash aneh
-            
-            const pathParts = oldPath.split('/');
-            pathParts[pathParts.length - 1] = cleanNewName;
+            const pathParts = oldPath.split('/'); pathParts[pathParts.length - 1] = cleanNewName;
             const newPath = pathParts.join('/');
 
-            if(userFolders.includes(newPath)) { alert("Nama folder sudah dipakai!"); return; }
+            if(userFolders.includes(newPath)) { showToast("Nama folder sudah dipakai!", "error"); return; }
 
-            // Update userFolders array
-            const idx = userFolders.indexOf(oldPath);
-            if(idx > -1) userFolders[idx] = newPath;
-            
-            // Update child folders too
-            userFolders.forEach((f, i) => {
-                if (f.startsWith(oldPath + '/')) {
-                    userFolders[i] = f.replace(oldPath + '/', newPath + '/');
-                }
-            });
+            const idx = userFolders.indexOf(oldPath); if(idx > -1) userFolders[idx] = newPath;
+            userFolders.forEach((f, i) => { if (f.startsWith(oldPath + '/')) { userFolders[i] = f.replace(oldPath + '/', newPath + '/'); } });
 
-            // Update Tracker Data Cache
             trackerDataCache.forEach(i => {
                 if(i.folder_name === oldPath) i.folder_name = newPath;
                 else if (i.folder_name && i.folder_name.startsWith(oldPath + '/')) i.folder_name = i.folder_name.replace(oldPath + '/', newPath + '/');
@@ -905,27 +938,35 @@
             localStorage.setItem('ct_tracker_'+currentUser.id, JSON.stringify(trackerDataCache));
             let pCache = JSON.parse(localStorage.getItem('ct_profile_'+currentUser.id)) || {}; pCache.custom_folders = userFolders; localStorage.setItem('ct_profile_'+currentUser.id, JSON.stringify(pCache));
 
-            closeLayerProgrammatically(); updateFolderDropdowns(); renderTrackerData(); showToast("Nama diubah!");
+            updateFolderDropdowns(); renderTrackerData(); showToast("Nama diubah!");
 
             if(navigator.onLine) {
                 await window.supabaseClient.from('ct_profiles').update({custom_folders: userFolders}).eq('id', currentUser.id);
                 await window.supabaseClient.from('ct_watch_history').update({folder_name: newPath}).eq('user_id', currentUser.id).eq('folder_name', oldPath);
-                // In a perfect world, we'd also update subfolders in DB, but this works for basic depth.
             }
         }
 
+        function promptDeleteFolder() {
+            closeLayerProgrammatically(); 
+            setTimeout(() => {
+                openLayer('delete');
+                const folderName = activeActionFolder.split('/').pop();
+                document.getElementById('delete-modal-title').innerText = "Hapus Folder?";
+                document.getElementById('delete-modal-desc').innerText = `Hapus folder "${folderName}"?\nFilm di dalamnya akan tetap aman di list Utama.`;
+                document.getElementById('delete-confirm-btn').onclick = executeDeleteFolder;
+                document.getElementById('delete-modal-overlay').classList.add('active');
+            }, 300);
+        }
+
         async function executeDeleteFolder() {
-            const folderPath = activeActionFolder;
-            const folderName = folderPath.split('/').pop();
-            if(!confirm(`Hapus folder "${folderName}"? Film di dalamnya akan tetap ada di list Utama (Semua).`)) return;
-            
+            const folderPath = activeActionFolder; closeLayerProgrammatically();
             userFolders = userFolders.filter(f => f !== folderPath && !f.startsWith(folderPath + '/'));
-            
             trackerDataCache.forEach(i => { if(i.folder_name && (i.folder_name === folderPath || i.folder_name.startsWith(folderPath + '/'))) i.folder_name = null; }); 
+            
             localStorage.setItem('ct_tracker_'+currentUser.id, JSON.stringify(trackerDataCache));
             let pCache = JSON.parse(localStorage.getItem('ct_profile_'+currentUser.id)) || {}; pCache.custom_folders = userFolders; localStorage.setItem('ct_profile_'+currentUser.id, JSON.stringify(pCache));
             
-            closeLayerProgrammatically(); updateFolderDropdowns(); renderTrackerData(); showToast("Folder dihapus.");
+            updateFolderDropdowns(); renderTrackerData(); showToast("Folder dihapus.");
 
             if(navigator.onLine) {
                 await window.supabaseClient.from('ct_profiles').update({custom_folders: userFolders}).eq('id', currentUser.id);
@@ -945,7 +986,6 @@
 
         function openFolder(fPath) { openLayer('dir_' + fPath); activeFolderName = fPath; currentFilter = 'folder_view'; renderTrackerData(); }
 
-        // Fungsi khusus simpan per-season
         async function saveSeasonToTracker(status, seasonNum, runtime, encodedSeasonName) {
             const seasonName = decodeURIComponent(encodedSeasonName);
             const seasonData = { isSeason: true, seasonNum: seasonNum, runtime: runtime, seasonName: seasonName };
@@ -1040,14 +1080,12 @@
                 if(activeFolderName === "") { document.getElementById('tracker-list-title').innerText = "Daftar Folder"; } 
                 else { const parentName = activeFolderName.split('/').pop(); document.getElementById('tracker-list-title').innerHTML = `<span style="color:var(--accent); cursor:pointer; font-weight:600;"><i class="fas fa-chevron-left"></i> ${parentName}</span>`; }
 
-                container.innerHTML = `<button class="btn-primary" style="margin-bottom:20px; background:rgba(0,122,255,0.1); color:var(--accent);" onclick="createFolder()"><i class="fas fa-plus"></i> ${activeFolderName === "" ? "Buat Folder Baru" : "Buat Sub-Folder"}</button>`;
+                container.innerHTML = `<button class="btn-primary" style="margin-bottom:20px; background:rgba(0,122,255,0.1); color:var(--accent);" onclick="openCreateFolderModal()"><i class="fas fa-plus"></i> ${activeFolderName === "" ? "Buat Folder Baru" : "Buat Sub-Folder"}</button>`;
                 
                 const subs = getDirectSubfolders(activeFolderName, userFolders);
                 subs.forEach(f => {
                     const folderNameUI = f.split('/').pop(); const count = trackerDataCache.filter(i => i.folder_name === f || (i.folder_name && i.folder_name.startsWith(f + '/'))).length;
-                    
-                    // FIXED: Event sentuh untuk long press
-                    const encodedPath = f.replace(/'/g, "\\'");
+                    const encodedPath = safeEncodeStr(f);
                     container.innerHTML += `<div class="folder-card" ontouchstart="touchStartFolder(event, '${encodedPath}')" ontouchmove="touchMoveFolder()" ontouchend="touchEndFolder(event, '${encodedPath}')" oncontextmenu="return false;">
                         <div class="folder-icon-box"><i class="fas fa-folder"></i></div>
                         <div class="folder-title">${folderNameUI} <span class="folder-count">${count} Item di dalamnya</span></div>
@@ -1092,13 +1130,10 @@
                 let statusColor = item.status === 'watched' ? '#34c759' : (item.status === 'favorite' ? '#ff2d55' : '#ff9500');
 
                 const originalMediaType = item.media_type.startsWith('tv_season_') ? 'tv' : item.media_type;
-                const encodedData = encodeURIComponent(JSON.stringify({ id: item.tmdb_id, title: item.title.split(' - Season')[0], poster_path: item.poster_path, media_type: originalMediaType, runtime: item.runtime }));
+                const encodedData = safeEncode({ id: item.tmdb_id, title: item.title.split(' - Season')[0], poster_path: item.poster_path, media_type: originalMediaType, runtime: item.runtime });
+                const encDelTitle = safeEncodeStr(item.title);
                 
                 div.onclick = function() { openSheetFromEncoded(encodedData); }; 
-                
-                // FIXED: Enkripsi penuh untuk judul menuju modal Hapus
-                const encDelTitle = encodeURIComponent(item.title);
-                
                 div.innerHTML = `
                     <img src="${IMG_URL + item.poster_path}" style="width:65px; height:95px; object-fit:cover; border-radius:10px; margin-right:15px; background:#e3e3e8; box-shadow: 0 2px 6px rgba(0,0,0,0.06);">
                     <div style="flex:1; text-align:left;">
@@ -1203,7 +1238,7 @@
             renderFriendTrackerData(); 
         }
 
-        function openFriendFolder(fPath) { openLayer('fdir_' + fPath); friendActiveFolder = fPath; friendFilter = 'folder_view'; renderFriendTrackerData(); }
+        function openFriendFolder(encodedPath) { openLayer('fdir_' + decodeURIComponent(encodedPath)); friendActiveFolder = decodeURIComponent(encodedPath); friendFilter = 'folder_view'; renderFriendTrackerData(); }
 
         function renderFriendTrackerData() {
             const container = document.getElementById('friend-tracker-content'); container.innerHTML = '';
@@ -1222,7 +1257,7 @@
                 const subs = getDirectSubfolders(friendActiveFolder, friendFolders);
                 subs.forEach(f => {
                     const folderNameUI = f.split('/').pop(); const count = friendTrackerCache.filter(i => i.folder_name === f || (i.folder_name && i.folder_name.startsWith(f + '/'))).length;
-                    const encodedPath = f.replace(/'/g, "\\'");
+                    const encodedPath = safeEncodeStr(f);
                     container.innerHTML += `<div class="folder-card" onclick="openFriendFolder('${encodedPath}')"><div class="folder-icon-box"><i class="fas fa-folder"></i></div><div class="folder-title">${folderNameUI} <span class="folder-count">${count} Item di dalamnya</span></div><i class="fas fa-chevron-right action-icon" style="color:var(--text-muted);"></i></div>`;
                 });
 
@@ -1268,7 +1303,7 @@
                 }
 
                 const originalMediaType = item.media_type.startsWith('tv_season_') ? 'tv' : item.media_type;
-                const encodedData = encodeURIComponent(JSON.stringify({ id: item.tmdb_id, title: item.title.split(' - Season')[0], poster_path: item.poster_path, media_type: originalMediaType, runtime: item.runtime }));
+                const encodedData = safeEncode({ id: item.tmdb_id, title: item.title.split(' - Season')[0], poster_path: item.poster_path, media_type: originalMediaType, runtime: item.runtime });
                 
                 div.onclick = function() { openSheetFromEncoded(encodedData); }; div.style.cursor = 'pointer';
                 div.innerHTML = `
