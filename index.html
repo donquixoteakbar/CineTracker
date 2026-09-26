@@ -19,7 +19,7 @@
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body { font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif; margin: 0; background-color: var(--bg-color); color: var(--text-main); overflow: hidden; width: 100vw; height: 100vh; }
 
-        /* --- Animasi Logo Senter --- */
+        /* --- Animasi Logo Senter (Cinematic & Eksternal Outline) --- */
         .app-header { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; padding: 5px 0; }
         .ticket-icon { color: var(--gold); font-size: 24px; -webkit-text-stroke: 1px black; transform: rotate(-15deg); filter: drop-shadow(1px 2px 1px rgba(0,0,0,0.2)); }
         
@@ -51,7 +51,6 @@
         .movie-card img { width: 100%; aspect-ratio: 2/3; border-radius: 12px; object-fit: cover; box-shadow: 0 4px 10px rgba(0,0,0,0.1); background: #e3e3e8;}
         .movie-card .title { font-size: 13px; font-weight: 600; margin-top: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         
-        /* INDIKATOR BADGE FILM */
         .card-badge { position: absolute; top: 6px; right: 6px; background: rgba(0,0,0,0.7); border-radius: 50%; width: 22px; height: 22px; display: flex; justify-content: center; align-items: center; font-size: 11px; z-index: 5; backdrop-filter: blur(4px); box-shadow: 0 2px 5px rgba(0,0,0,0.3); }
         .card-badge.watched { color: #34c759; }
         .card-badge.favorite { color: #ff2d55; }
@@ -154,10 +153,7 @@
         <div class="custom-modal">
             <div class="custom-modal-title">Keluar Aplikasi?</div>
             <div class="custom-modal-desc">Apakah kamu yakin ingin keluar dari CineTracker?</div>
-            <div class="custom-modal-actions">
-                <button class="custom-modal-btn" onclick="closeExitModalVisual()">Tidak</button>
-                <button class="custom-modal-btn danger" onclick="executeExitApp()">Ya, Keluar</button>
-            </div>
+            <div class="custom-modal-actions"><button class="custom-modal-btn" onclick="closeLayerProgrammatically()">Tidak</button><button class="custom-modal-btn danger" onclick="executeExitApp()">Ya, Keluar</button></div>
         </div>
     </div>
     
@@ -169,25 +165,17 @@
                 <input type="text" id="friend-search-input" class="auth-input" style="margin-bottom:0;" placeholder="Ketik username teman...">
                 <p id="friend-search-msg" style="font-size: 11px; color: #ff3b30; margin: 5px 0 0 0; text-align:left;"></p>
             </div>
-            <div class="custom-modal-actions">
-                <button class="custom-modal-btn" onclick="closeLayerVisual('search_friend')">Batal</button>
-                <button class="custom-modal-btn" style="font-weight:700;" onclick="executeSearchFriend()">Cari</button>
-            </div>
+            <div class="custom-modal-actions"><button class="custom-modal-btn" onclick="closeLayerProgrammatically()">Batal</button><button class="custom-modal-btn" style="font-weight:700;" onclick="searchFriend()">Cari</button></div>
         </div>
     </div>
 
-    <!-- Modal Potong Foto -->
     <div id="crop-modal">
         <div style="text-align: center; color: white; padding-top: env(safe-area-inset-top, 20px); font-size: 14px;">Cubit untuk Zoom & Geser</div>
         <div class="crop-container"><img id="crop-image" src=""></div>
-        <div class="crop-controls">
-            <button class="btn-secondary" style="background:#3a3a3c; color:white; flex:1;" onclick="closeCropVisual()">Batal</button>
-            <button class="btn-primary" style="flex:1; margin-bottom:0;" onclick="applyCrop()">Selesai</button>
-        </div>
+        <div class="crop-controls"><button class="btn-secondary" style="background:#3a3a3c; color:white; flex:1;" onclick="closeLayerProgrammatically()">Batal</button><button class="btn-primary" style="flex:1; margin-bottom:0;" onclick="applyCrop()">Selesai</button></div>
     </div>
 
-    <!-- Modal Rating -->
-    <div class="overlay" id="rating-overlay" onclick="closeRatingVisual()"></div>
+    <div class="overlay" id="rating-overlay" onclick="closeLayerProgrammatically()"></div>
     <div class="bottom-sheet" id="rating-sheet" style="z-index: 4000; text-align:center;">
         <div class="sheet-handle"></div>
         <h3 style="margin-top:0;">Beri Nilai Film</h3>
@@ -204,14 +192,11 @@
         
         <!-- ================= EXPLORE ================= -->
         <div id="page-home" class="page active">
-            <div class="app-header">
-                <i class="fas fa-ticket-alt ticket-icon"></i>
-                <span class="logo-wrapper" data-text="CineTracker"><span class="animated-logo-text">CineTracker</span></span>
-            </div>
+            <div class="app-header"><i class="fas fa-ticket-alt ticket-icon"></i><span class="logo-wrapper" data-text="CineTracker"><span class="animated-logo-text">CineTracker</span></span></div>
             <h1 class="page-title">Explore</h1>
             <form class="search-form" id="search-form"><i class="fas fa-search"></i><input type="text" id="search-input" placeholder="Ketik judul film..."></form>
             <div id="search-area" style="display: none;">
-                <div class="section-title"><span id="search-title">Hasil</span><span class="close-search" id="close-search" onclick="closeSearchVisual()" style="display:block;">Batal</span></div>
+                <div class="section-title"><span id="search-title">Hasil</span><span class="close-search" id="close-search" onclick="closeLayerProgrammatically()" style="display:block;">Batal</span></div>
                 <div class="movie-grid" id="search-container"></div>
             </div>
             <div id="explore-area">
@@ -280,9 +265,8 @@
                 <div style="text-align: left; padding-top: 15px; border-top: 1px solid #e3e3e8;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                         <h4 style="margin: 0; font-size: 16px;">Daftar Teman</h4>
-                        <button onclick="openSearchFriendModal()" style="background: none; border: none; color: var(--accent); font-weight: 600; font-size: 14px; cursor:pointer;"><i class="fas fa-search"></i> Cari Akun</button>
+                        <button onclick="openLayer('search_friend')" style="background: none; border: none; color: var(--accent); font-weight: 600; font-size: 14px; cursor:pointer;"><i class="fas fa-plus"></i> Tambah</button>
                     </div>
-
                     <div id="friend-list-container"><p style="font-size: 13px; color: var(--text-muted);">Belum ada teman yang diikuti.</p></div>
                 </div>
             </div>
@@ -291,13 +275,13 @@
 
     <!-- Navigasi Bawah -->
     <div class="bottom-nav">
-        <div class="nav-item active" onclick="switchPageVisual('home', this)"><i class="fas fa-compass"></i><span>Explore</span></div>
-        <div class="nav-item" onclick="switchPageVisual('tracker', this)"><i class="fas fa-check-double"></i><span>Tracker</span></div>
-        <div class="nav-item" onclick="switchPageVisual('profile', this)"><i class="fas fa-user"></i><span>Profile</span></div>
+        <div class="nav-item active" onclick="switchPage('home')"><i class="fas fa-compass"></i><span>Explore</span></div>
+        <div class="nav-item" onclick="switchPage('tracker')"><i class="fas fa-check-double"></i><span>Tracker</span></div>
+        <div class="nav-item" onclick="switchPage('profile')"><i class="fas fa-user"></i><span>Profile</span></div>
     </div>
 
     <!-- ================= BOTTOM SHEET FILM ================= -->
-    <div class="overlay" id="sheet-overlay" onclick="closeSheetVisual()"></div>
+    <div class="overlay" id="sheet-overlay" onclick="closeLayerProgrammatically()"></div>
     <div class="bottom-sheet" id="movie-sheet">
         <div class="sheet-handle"></div>
         <div class="sheet-header">
@@ -328,8 +312,7 @@
     <div id="friend-panel" style="position:fixed; top:0; left:0; width:100%; height:100%; background:var(--bg-color); z-index:2500; transform:translateX(100%); transition:transform 0.4s cubic-bezier(0.36, 0.66, 0.04, 1); overflow-y:auto; padding-bottom: 40px;">
         <div style="background: white; padding: 20px; padding-top: max(20px, env(safe-area-inset-top)); display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e3e3e8; position: sticky; top: 0; z-index: 10;">
             <div style="display:flex; align-items:center;">
-                <!-- Tombol KEMBALI Teman memanggil fungsi TUTUP PANEL VISUAL -->
-                <i class="fas fa-chevron-left" onclick="closeFriendPanelVisual()" style="font-size: 20px; color: var(--accent); padding-right: 15px; cursor: pointer;"></i>
+                <i class="fas fa-chevron-left" onclick="closeLayerProgrammatically()" style="font-size: 20px; color: var(--accent); padding-right: 15px; cursor: pointer;"></i>
                 <h2 style="margin: 0; font-size: 20px;">Profil Teman</h2>
             </div>
             <button id="btn-toggle-friend" class="btn-primary" style="margin:0; padding:6px 12px; width:auto; font-size:13px; border-radius:20px;" onclick="toggleFriend()"><i class="fas fa-user-plus"></i> Ikuti</button>
@@ -339,7 +322,7 @@
             <div class="avatar-wrapper" style="margin-bottom: 10px;"><img src="" id="friend-panel-avatar" class="avatar-img"></div>
             <h3 id="friend-panel-username" style="margin-top:0; font-size: 24px;">@username</h3>
             
-            <div style="display:flex; justify-content:space-around; margin: 20px 0 10px 0; padding: 15px 0; border-top: 1px solid #e3e3e8;">
+            <div style="display:flex; justify-content:space-around; margin-top: 15px; padding-top: 15px; border-top: 1px solid #e3e3e8;">
                 <div><div style="font-size:20px; font-weight:bold; color:var(--accent);" id="friend-stat-watched">0</div><div style="font-size:11px; color:var(--text-muted);">Selesai</div></div>
                 <div><div style="font-size:20px; font-weight:bold; color:#ff2d55;" id="friend-stat-favorite">0</div><div style="font-size:11px; color:var(--text-muted);">Favorit</div></div>
                 <div><div style="font-size:20px; font-weight:bold; color:#ff9500;" id="friend-stat-watchlist">0</div><div style="font-size:11px; color:var(--text-muted);">Nanti Saja</div></div>
@@ -379,12 +362,12 @@
 
     <!-- ================= LOGIKA APLIKASI ================= -->
     <script>
-        // --- DETEKTOR OFFLINE ---
+        // --- 1. DETEKTOR OFFLINE ---
         window.addEventListener('offline', () => { document.getElementById('offline-banner').style.display = 'block'; });
         window.addEventListener('online', () => { document.getElementById('offline-banner').style.display = 'none'; fetchAndRenderTracker(); });
         if(!navigator.onLine) document.getElementById('offline-banner').style.display = 'block';
 
-        // --- FORMAT DURASI JAM & MENIT ---
+        // --- 2. FORMAT DURASI (JAM & MENIT) ---
         function formatRuntime(mins) {
             if (!mins || mins === 0) return '...';
             const h = Math.floor(mins / 60); const m = mins % 60;
@@ -393,38 +376,53 @@
             return `${m} Mnt`;
         }
 
-        // --- SISTEM JEMBATAN ANDROID NATIVE (Sesuai Panduan Gambar) ---
-        window.checkCanExitApp = function() {
-            if (document.getElementById('crop-modal').style.display === 'flex') { closeCropVisual(); return false; }
-            if (document.getElementById('rating-overlay').classList.contains('active')) { closeRatingVisual(); return false; }
-            if (document.getElementById('sheet-overlay').classList.contains('active')) { closeSheetVisual(); return false; }
-            if (document.getElementById('search-friend-modal').classList.contains('active')) { closeLayerVisual('search_friend'); return false; }
-            if (isSearchOpen) { closeSearchVisual(); return false; }
-            if (friendActiveFolder !== "") { goBackToFriendFolder(); return false; }
-            if (activeFolderName !== "") { goBackToFolder(); return false; }
-            if (document.getElementById('friend-panel').style.transform === 'translateX(0px)' || document.getElementById('friend-panel').style.transform === 'translateX(0)') { closeFriendPanelVisual(); return false; }
-            if (currentPage !== 'home') { switchPageVisual('home', document.querySelectorAll('.nav-item')[0]); return false; }
-            return true; // Boleh keluar ke sistem Android
-        };
+        // --- 3. MASTER HISTORY NATIVE (ALGORITMA ANTI KELUAR) ---
+        const pagesArray = ['home', 'tracker', 'profile']; 
+        let currentPage = 'home';
+        let modalStack = []; 
+        let isScriptHash = false;
+        
+        function openLayer(layerId) { 
+            isScriptHash = true; modalStack.push(layerId); window.location.hash = "view_" + Date.now(); 
+            if(layerId === 'exit') document.getElementById('exit-modal-overlay').classList.add('active');
+            if(layerId === 'search_friend') document.getElementById('search-friend-modal').classList.add('active');
+        }
 
-        // Fallback untuk eksekusi di browser PC/iOS
-        window.addEventListener('popstate', function(e) {
-            const canExit = window.checkCanExitApp();
-            if (!canExit) { history.pushState(null, '', window.location.pathname); } 
-            else { document.getElementById('exit-modal-overlay').classList.add('active'); history.pushState(null, '', window.location.pathname); }
+        window.addEventListener('hashchange', function() {
+            if (isScriptHash) { isScriptHash = false; return; }
+            if (modalStack.length > 0) { const topLayer = modalStack.pop(); executeCloseVisual(topLayer); } 
+            else { 
+                if (currentPage !== 'home') {
+                    switchPageVisual('home');
+                    history.pushState({ page: 'home' }, '');
+                } else {
+                    openLayer('exit'); 
+                }
+            }
         });
 
-        // --- FUNGSI PENUTUPAN VISUAL MURNI ---
-        function closeLayerProgrammatically() { window.checkCanExitApp(); }
-        function closeLayerVisual(layerId) { if(layerId === 'search_friend') document.getElementById('search-friend-modal').classList.remove('active'); }
-        function closeCropVisual() { document.getElementById('crop-modal').style.display = 'none'; if(cropper) cropper.destroy(); }
-        function closeSheetVisual() { document.getElementById('sheet-overlay').classList.remove('active'); document.getElementById('movie-sheet').classList.remove('active'); }
-        function closeRatingVisual() { document.getElementById('rating-overlay').classList.remove('active'); document.getElementById('rating-sheet').classList.remove('active'); activeRatingId = null; }
-        function closeSearchVisual() { isSearchOpen = false; document.getElementById('search-input').value = ''; document.getElementById('explore-area').style.display = 'block'; document.getElementById('search-area').style.display = 'none'; document.getElementById('search-container').innerHTML = ''; }
-        function closeFriendPanelVisual() { document.getElementById('friend-panel').style.transform = 'translateX(100%)'; }
-        function closeExitModalVisual() { document.getElementById('exit-modal-overlay').classList.remove('active'); }
+        function closeLayerProgrammatically() { if (modalStack.length > 0) history.back(); }
 
-        // --- UTILITAS & BADGE ---
+        function executeCloseVisual(layerId) {
+            if(layerId === 'crop') { document.getElementById('crop-modal').style.display = 'none'; if(cropper) cropper.destroy(); }
+            else if(layerId === 'sheet') { document.getElementById('sheet-overlay').classList.remove('active'); document.getElementById('movie-sheet').classList.remove('active'); }
+            else if(layerId === 'rating') { document.getElementById('rating-overlay').classList.remove('active'); document.getElementById('rating-sheet').classList.remove('active'); activeRatingId = null; }
+            else if(layerId === 'delete') { document.getElementById('delete-modal-overlay').classList.remove('active'); pendingDeleteId = null; }
+            else if(layerId === 'search') { isSearchOpen = false; document.getElementById('search-input').value = ''; document.getElementById('explore-area').style.display = 'block'; document.getElementById('search-area').style.display = 'none'; document.getElementById('search-container').innerHTML = ''; }
+            else if(layerId === 'friend_panel') { document.getElementById('friend-panel').style.transform = 'translateX(100%)'; }
+            else if(layerId === 'search_friend') { document.getElementById('search-friend-modal').classList.remove('active'); }
+            else if(layerId === 'exit') { document.getElementById('exit-modal-overlay').classList.remove('active'); }
+            else if(layerId.startsWith('dir_')) { 
+                let parts = activeFolderName.split('/'); parts.pop(); activeFolderName = parts.join('/');
+                if(activeFolderName === "") currentFilter = 'folders'; renderTrackerData();
+            }
+            else if(layerId.startsWith('fdir_')) { 
+                let parts = friendActiveFolder.split('/'); parts.pop(); friendActiveFolder = parts.join('/');
+                if(friendActiveFolder === "") friendFilter = 'folders'; renderFriendTrackerData();
+            }
+        }
+
+        // --- 4. UTILITAS & BADGE ---
         function showToast(message, type = "success") {
             const toast = document.getElementById('ios-toast'); document.getElementById('toast-message').innerText = message;
             const icon = toast.querySelector('i');
@@ -455,27 +453,41 @@
             });
         }
 
-        // --- NAVIGASI TAB ---
-        const pagesArray = ['home', 'tracker', 'profile']; let currentPage = 'home';
-        function switchPageVisual(targetPageId, navElement) {
+        // --- 5. NAVIGASI TAB ---
+        function switchPageVisual(targetPageId) {
             const inputs = ['username', 'password', 'friend-search-input']; inputs.forEach(id => document.getElementById(id).setAttribute('tabindex', targetPageId === 'profile' ? '0' : '-1'));
-            if(navElement) { document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active')); navElement.classList.add('active'); }
+            document.querySelectorAll('.nav-item').forEach(el => {
+                el.classList.remove('active');
+                if (el.getAttribute('onclick').includes(`'${targetPageId}'`)) el.classList.add('active');
+            });
             const currentEl = document.getElementById(`page-${currentPage}`); const targetEl = document.getElementById(`page-${targetPageId}`);
             const curIdx = pagesArray.indexOf(currentPage); const tgtIdx = pagesArray.indexOf(targetPageId);
             currentEl.classList.remove('active', 'prev'); targetEl.classList.remove('active', 'prev');
             if (tgtIdx > curIdx) { targetEl.style.transform = 'translateX(100%)'; targetEl.classList.add('active'); currentEl.classList.add('prev'); } 
             else { targetEl.style.transform = 'translateX(-30%)'; targetEl.classList.add('active'); currentEl.style.transform = 'translateX(100%)'; }
             void targetEl.offsetWidth; setTimeout(() => { targetEl.style.transform = ''; currentEl.style.transform = ''; if(tgtIdx < curIdx) currentEl.classList.remove('active'); }, 50);
+            
             currentPage = targetPageId; 
-            if(currentPage === 'tracker' && window.supabaseClient) fetchAndRenderTracker();
-            if(currentPage === 'home') updateAllBadges();
+            
+            // PERBAIKAN: Menghapus fetchAndRenderTracker() di sini agar mencegah Race Condition yang menimpa local cache.
+            if(currentPage === 'tracker') { renderTrackerData(); }
+            if(currentPage === 'home') { updateAllBadges(); }
+        }
+        
+        function switchPage(targetPageId) {
+            if (currentPage === targetPageId) return;
+            if(isSearchOpen) closeLayerProgrammatically();
+            switchPageVisual(targetPageId);
         }
 
-        // --- FETCH TMDB ---
+        // --- 6. FETCH TMDB (Offline Support & URL Fix) ---
         async function fetchMovies(endpoint, containerId) {
             if(!navigator.onLine) { document.getElementById(containerId).innerHTML = '<p>Offline.</p>'; return; }
             try {
-                const res = await fetch(`${BASE_URL}${endpoint}&api_key=${TMDB_API_KEY}&language=id-ID`); const data = await res.json();
+                const separator = endpoint.includes('?') ? '&' : '?';
+                const res = await fetch(`${BASE_URL}${endpoint}${separator}api_key=${TMDB_API_KEY}&language=id-ID`); 
+                const data = await res.json();
+                
                 const container = document.getElementById(containerId); container.innerHTML = '';
                 if(!data.results || data.results.length === 0) return;
                 data.results.forEach(item => {
@@ -493,10 +505,10 @@
         document.getElementById('search-form').addEventListener('submit', function(e) { e.preventDefault(); document.getElementById('search-input').blur(); });
         document.getElementById('search-input').addEventListener('input', function() {
             clearTimeout(searchTimeout); const query = this.value.trim();
-            if(query.length === 0) { closeSearchVisual(); return; }
+            if(query.length === 0) { if(isSearchOpen) closeLayerProgrammatically(); return; }
             if(query.length < 2) return; 
             searchTimeout = setTimeout(async () => {
-                isSearchOpen = true; document.getElementById('explore-area').style.display = 'none'; document.getElementById('search-area').style.display = 'block';
+                if(!isSearchOpen) { openLayer('search'); isSearchOpen = true; document.getElementById('explore-area').style.display = 'none'; document.getElementById('search-area').style.display = 'block'; }
                 document.getElementById('search-title').innerText = `Mencari: "${query}"...`;
                 const container = document.getElementById('search-container'); container.innerHTML = '<p style="grid-column: 1 / -1; text-align:center;">Mencari film...</p>';
                 if(!navigator.onLine) { container.innerHTML = '<p style="grid-column: 1 / -1; text-align:center; color:#ff3b30;">Internet Offline.</p>'; return; }
@@ -519,7 +531,7 @@
             }, 800); 
         });
 
-        // --- BOTTOM SHEET & FALLBACK API TVMaze ---
+        // --- 7. BOTTOM SHEET & FALLBACK API TVMaze ---
         function updateFolderDropdowns() {
             const select = document.getElementById('sheet-folder-select'); select.innerHTML = '<option value="">-- Tidak Masuk Folder --</option>';
             userFolders.sort().forEach(f => {
@@ -529,6 +541,7 @@
         }
 
         async function openSheetFromEncoded(encodedStr) {
+            openLayer('sheet');
             selectedMovie = JSON.parse(decodeURIComponent(encodedStr)); const isTV = selectedMovie.media_type === 'tv';
             document.getElementById('sheet-poster').src = IMG_URL + selectedMovie.poster_path; document.getElementById('sheet-title').innerText = selectedMovie.title; document.getElementById('sheet-meta').innerText = "Memuat..."; document.getElementById('sheet-rating').innerHTML = ""; document.getElementById('sheet-genres').innerHTML = ""; document.getElementById('sheet-overview').innerText = "Sedang mengambil detail...";
             
@@ -560,7 +573,7 @@
                 }
 
                 selectedMovie.runtime = runtime;
-                if(overview === "") overview = "Tidak ada sinopsis bahasa Indonesia.";
+                if(overview === "") overview = "Tidak ada sinopsis yang tersedia.";
 
                 document.getElementById('sheet-meta').innerText = `${year} • ${formatRuntime(runtime)} • ${isTV ? 'TV Series' : 'Movie'}`; 
                 document.getElementById('sheet-rating').innerHTML = `<i class="fas fa-star"></i> ${rating} <span style="color:var(--text-muted); font-size:12px; font-weight:normal;">/ 10</span>`; 
@@ -569,9 +582,9 @@
             } catch (err) {}
         }
 
-        // --- CROPPER ---
+        // --- 8. CROPPER ---
         function initCrop(event) {
-            const file = event.target.files[0]; if (!file) return; 
+            const file = event.target.files[0]; if (!file) return; openLayer('crop');
             const reader = new FileReader();
             reader.onload = function(e) {
                 document.getElementById('crop-modal').style.display = 'flex'; const image = document.getElementById('crop-image'); image.src = e.target.result;
@@ -581,14 +594,14 @@
         }
         async function applyCrop() {
             if(!cropper || !currentUser) return; showToast("Menyimpan foto...");
-            const canvas = cropper.getCroppedCanvas({ width: 400, height: 400 }); const base64Avatar = canvas.toDataURL('image/jpeg', 0.85); document.getElementById('profile-avatar').src = base64Avatar; closeCropVisual(); 
+            const canvas = cropper.getCroppedCanvas({ width: 400, height: 400 }); const base64Avatar = canvas.toDataURL('image/jpeg', 0.85); document.getElementById('profile-avatar').src = base64Avatar; closeLayerProgrammatically(); 
             const { error } = await window.supabaseClient.from('ct_profiles').update({ avatar_url: base64Avatar }).eq('id', currentUser.id);
             if(!error) { showToast("Foto diperbarui!"); localStorage.setItem('ct_profile_'+currentUser.id, JSON.stringify({...JSON.parse(localStorage.getItem('ct_profile_'+currentUser.id) || '{}'), avatar_url: base64Avatar})); }
         }
 
-        // --- RATING & DELETE MODALS ---
+        // --- 9. RATING & DELETE MODALS ---
         function openRatingModal(tmdbId, currentRating) {
-            activeRatingId = tmdbId; document.getElementById('rating-slider').value = currentRating || 0.0; updateRatingDisplay(currentRating || 0.0);
+            openLayer('rating'); activeRatingId = tmdbId; document.getElementById('rating-slider').value = currentRating || 0.0; updateRatingDisplay(currentRating || 0.0);
             document.getElementById('rating-overlay').classList.add('active'); document.getElementById('rating-sheet').classList.add('active');
         }
         function updateRatingDisplay(val) { document.getElementById('rating-display').innerText = parseFloat(val).toFixed(1); }
@@ -598,36 +611,43 @@
             
             const item = trackerDataCache.find(i=>i.tmdb_id===activeRatingId); if(item) item.user_rating = val; 
             localStorage.setItem('ct_tracker_'+currentUser.id, JSON.stringify(trackerDataCache));
-            renderTrackerData(); closeRatingVisual(); showToast("Rating disimpan!");
+            renderTrackerData(); closeLayerProgrammatically(); showToast("Rating disimpan!");
 
             if(navigator.onLine) await window.supabaseClient.from('ct_watch_history').update({ user_rating: val }).eq('user_id', currentUser.id).eq('tmdb_id', activeRatingId);
         }
 
         function executeExitApp() { if (navigator.app) { navigator.app.exitApp(); } else if (navigator.device) { navigator.device.exitApp(); } else { window.close(); } }
 
-        function showDeleteModal(tmdbId, title) { pendingDeleteId = tmdbId; document.getElementById('delete-modal-desc').innerText = `Yakin ingin menghapus "${title}"?`; document.getElementById('delete-modal-overlay').classList.add('active'); }
+        function showDeleteModal(tmdbId, title) { openLayer('delete'); pendingDeleteId = tmdbId; document.getElementById('delete-modal-desc').innerText = `Yakin ingin menghapus "${title}"?`; document.getElementById('delete-modal-overlay').classList.add('active'); }
+        
         async function executeDeleteMovie() {
-            if(!pendingDeleteId) return; const idToDel = pendingDeleteId; closeLayerVisual('delete'); 
+            if(!pendingDeleteId) return; const idToDel = pendingDeleteId; closeLayerProgrammatically(); 
             
             const el = document.querySelector(`.list-item[data-id="${idToDel}"]`); if(el) { el.style.opacity = '0'; setTimeout(() => el.remove(), 300); }
-            trackerDataCache = trackerDataCache.filter(item => item.tmdb_id !== idToDel); 
+            
+            // PERBAIKAN: Hapus dari local storage dulu agar langsung hilang dari pandangan
+            trackerDataCache = trackerDataCache.filter(item => item.tmdb_id != idToDel); 
             localStorage.setItem('ct_tracker_'+currentUser.id, JSON.stringify(trackerDataCache));
             calculateWatchTime(trackerDataCache, 'stat-watchtime'); showToast("Dihapus!"); updateAllBadges();
             
-            if(navigator.onLine) await window.supabaseClient.from('ct_watch_history').delete().eq('user_id', currentUser.id).eq('tmdb_id', idToDel);
+            if(navigator.onLine) {
+                await window.supabaseClient.from('ct_watch_history').delete().eq('user_id', currentUser.id).eq('tmdb_id', idToDel);
+            }
         }
 
-        // --- SUPABASE INIT & OFFLINE CACHE (LOCALSTORAGE) ---
+        // --- 10. SUPABASE INIT & OFFLINE CACHE ---
         const SUPABASE_URL = 'https://dthgwnuycspqnscldoci.supabase.co'; const SUPABASE_ANON_KEY = 'sb_publishable_rrjrH0rdRLAIXhUVzWd_wQ_3An40fkC';
         const persistentStorage = { getItem: (key) => { try { return window.localStorage.getItem(key); } catch(e) { return null; } }, setItem: (key, value) => { try { window.localStorage.setItem(key, value); } catch(e) {} }, removeItem: (key) => { try { window.localStorage.removeItem(key); } catch(e) {} } };
-        const script = document.createElement('script'); script.src = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2";
-        script.onload = async () => { if (window.supabase) { window.supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth: { storage: persistentStorage, autoRefreshToken: true, persistSession: true } }); await checkSession(); } };
-        document.body.appendChild(script);
+        
+        if (window.supabase) {
+            window.supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth: { storage: persistentStorage, autoRefreshToken: true, persistSession: true } });
+            checkSession();
+        }
 
         window.onload = async () => {
-            history.pushState(null, '', window.location.pathname);
+            history.replaceState({ page: 'home' }, '');
             if(navigator.onLine) {
-                setTimeout(() => { fetchMovies('/trending/all/day?', 'trending-container'); }, 100);
+                setTimeout(() => { fetchMovies('/trending/all/day', 'trending-container'); }, 100);
                 setTimeout(() => { fetchMovies('/discover/movie?with_companies=420', 'marvel-container'); }, 600);
                 setTimeout(() => { fetchMovies('/discover/movie?with_companies=12806|9993', 'dc-container'); }, 1100);
             }
@@ -636,7 +656,6 @@
         function generateDummyEmail(rawUsername) { return rawUsername.toLowerCase().replace(/\s+/g, '') + "@cinetracker.app"; }
         
         async function fetchUserProfile(userId, imgElementId) {
-            // LOAD OFFLINE CACHE FIRST
             const cacheProfile = localStorage.getItem('ct_profile_'+userId);
             if(cacheProfile) {
                 const data = JSON.parse(cacheProfile);
@@ -646,7 +665,6 @@
 
             if(!navigator.onLine) return; 
 
-            // FETCH ONLINE UPDATE
             const { data } = await window.supabaseClient.from('ct_profiles').select('avatar_url, username, custom_folders').eq('id', userId).single();
             if(data) {
                 localStorage.setItem('ct_profile_'+userId, JSON.stringify(data));
@@ -665,7 +683,9 @@
                 if (currentPage === 'tracker' || currentPage === 'profile') fetchAndRenderTracker(); 
             } else {
                 currentUser = null; document.getElementById('auth-section').style.display = 'block'; document.getElementById('user-section').style.display = 'none';
-                document.getElementById('tracker-msg').innerText = "Silakan login di tab Profile.";
+                
+                const trackerContent = document.getElementById('tracker-content');
+                if (trackerContent) trackerContent.innerHTML = '<div class="auth-container" style="text-align:center;"><p style="color:#8e8e93;">Silakan login di tab Profile.</p></div>';
             }
         }
         async function handleRegister() {
@@ -685,14 +705,14 @@
             await window.supabaseClient.auth.signOut(); 
             if(currentUser) { localStorage.removeItem('ct_tracker_'+currentUser.id); localStorage.removeItem('ct_friends_'+currentUser.id); }
             trackerDataCache = []; friendTrackerCache = []; userFolders = []; myFriends = [];
-            if(isSearchOpen) closeSearchVisual(); 
+            if(isSearchOpen) closeLayerProgrammatically(); document.getElementById('search-input').value = '';
             document.getElementById('tracker-content').innerHTML = `<i class="fas fa-bookmark fa-3x" style="color:#8e8e93; margin-bottom:15px;"></i><p style="color:#8e8e93; font-size:14px;">Silakan login di tab Profile.</p>`; 
             document.getElementById('stat-watched').innerText="0"; document.getElementById('stat-watchlist').innerText="0"; document.getElementById('stat-favorite').innerText="0"; document.getElementById('stat-watchtime').innerText="0 Jam"; 
-            document.getElementById('friend-search-input').value = ''; document.getElementById('friend-search-msg').innerText = ''; document.getElementById('friend-list-container').innerHTML = '<p style="font-size: 13px; color: var(--text-muted);">Silakan login.</p>';
+            document.getElementById('friend-list-container').innerHTML = '<p style="font-size: 13px; color: var(--text-muted);">Silakan login.</p>';
             await checkSession(); updateAllBadges();
         }
 
-        // --- TRACKER LOKAL & OFFLINE CACHE ---
+        // --- 11. TRACKER LOKAL & FOLDER BERSARANG ---
         function setFilter(filterType, btnElement) { 
             currentFilter = filterType; document.querySelectorAll('#page-tracker .segmented-btn').forEach(btn => btn.classList.remove('active')); 
             if(btnElement) btnElement.classList.add('active'); 
@@ -745,47 +765,36 @@
             }); return Array.from(subs).sort();
         }
 
-        function openFolder(fPath) { activeFolderName = fPath; currentFilter = 'folder_view'; renderTrackerData(); }
-        function goBackToFolder() {
-            let parts = activeFolderName.split('/'); parts.pop(); activeFolderName = parts.join('/');
-            if(activeFolderName === "") { currentFilter = 'folders'; }
-            renderTrackerData();
-        }
+        function openFolder(fPath) { openLayer('dir_' + fPath); activeFolderName = fPath; currentFilter = 'folder_view'; renderTrackerData(); }
 
         async function saveToTracker(status) {
-            if(!currentUser) { showToast("Login dulu!", "error"); closeSheetVisual(); switchPageVisual('profile'); return; }
+            if(!currentUser) { showToast("Login dulu!", "error"); closeLayerProgrammatically(); switchPageVisual('profile'); return; }
             const chosenFolder = document.getElementById('sheet-folder-select').value; const folderVal = chosenFolder === "" ? null : chosenFolder;
             
             const existingIndex = trackerDataCache.findIndex(i => i.tmdb_id == selectedMovie.id);
             
-            // JIKA BARU, GUNAKAN PAYLOAD LENGKAP TANPA MENGUBAH RATING
-            const dbPayload = { 
-                user_id: currentUser.id, tmdb_id: selectedMovie.id, media_type: selectedMovie.media_type, title: selectedMovie.title, poster_path: selectedMovie.poster_path, status: status, runtime: selectedMovie.runtime || 0, folder_name: folderVal 
-            };
-
+            // PERBAIKAN: Lakukan Optimistic Update (update langsung di layar HP)
             if(existingIndex > -1) { 
-                // PERBAIKAN BUG RATING RESET: Tetap gunakan rating dan urutan yang sudah ada di memori cache lokal
-                dbPayload.user_rating = trackerDataCache[existingIndex].user_rating || 0;
-                dbPayload.custom_order = trackerDataCache[existingIndex].custom_order || Date.now();
-                trackerDataCache[existingIndex] = {...trackerDataCache[existingIndex], ...dbPayload}; 
+                trackerDataCache[existingIndex] = {...trackerDataCache[existingIndex], status: status, folder_name: folderVal}; 
             } else { 
-                dbPayload.user_rating = 0;
-                dbPayload.custom_order = Date.now();
-                // Data lokal kita tambahkan ID sementara (Date.now()) agar tidak error saat dirender
-                trackerDataCache.unshift({ ...dbPayload, id: Date.now(), created_at: new Date().toISOString() }); 
+                const localItem = { id: Date.now(), user_id: currentUser.id, tmdb_id: selectedMovie.id, media_type: selectedMovie.media_type, title: selectedMovie.title, poster_path: selectedMovie.poster_path, status: status, runtime: selectedMovie.runtime || 0, custom_order: Date.now(), folder_name: folderVal, created_at: new Date().toISOString() };
+                trackerDataCache.unshift(localItem); 
             }
-
-            localStorage.setItem('ct_tracker_'+currentUser.id, JSON.stringify(trackerDataCache));
             
-            showToast("Tersimpan!"); closeSheetVisual(); renderTrackerData(); calculateWatchTime(trackerDataCache, 'stat-watchtime'); updateAllBadges();
+            localStorage.setItem('ct_tracker_'+currentUser.id, JSON.stringify(trackerDataCache));
+            showToast("Tersimpan!"); closeLayerProgrammatically(); renderTrackerData(); calculateWatchTime(trackerDataCache, 'stat-watchtime'); updateAllBadges();
 
+            // PERBAIKAN: Cek manual ke server alih-alih memakai 'upsert' yang rentan error di Supabase
             if(navigator.onLine) {
-                // Upsert ke Supabase menggunakan Payload Bersih
-                const { error } = await window.supabaseClient.from('ct_watch_history').upsert(dbPayload, { onConflict: 'user_id, tmdb_id' });
-                if(!error) {
-                    // Update Cache Lokal secara transparan (mendapatkan UUID asli dari Supabase)
-                    const { data } = await window.supabaseClient.from('ct_watch_history').select('*').eq('user_id', currentUser.id);
-                    if (data) { trackerDataCache = data; localStorage.setItem('ct_tracker_'+currentUser.id, JSON.stringify(trackerDataCache)); }
+                const { data: existDb } = await window.supabaseClient.from('ct_watch_history').select('id').eq('user_id', currentUser.id).eq('tmdb_id', selectedMovie.id).maybeSingle();
+                
+                if (existDb) {
+                    // Update server diam-diam
+                    await window.supabaseClient.from('ct_watch_history').update({ status: status, folder_name: folderVal, runtime: selectedMovie.runtime || 0 }).eq('id', existDb.id);
+                } else {
+                    // Insert server (ID otomatis diurus Supabase)
+                    const dbItem = { user_id: currentUser.id, tmdb_id: selectedMovie.id, media_type: selectedMovie.media_type, title: selectedMovie.title, poster_path: selectedMovie.poster_path, status: status, runtime: selectedMovie.runtime || 0, custom_order: Date.now(), folder_name: folderVal };
+                    await window.supabaseClient.from('ct_watch_history').insert([dbItem]);
                 }
             }
         }
@@ -843,7 +852,7 @@
             if(currentFilter === 'folders' || currentFilter === 'folder_view') {
                 document.getElementById('sort-tracker').style.display = 'block'; 
                 if(activeFolderName === "") { document.getElementById('tracker-list-title').innerText = "Daftar Folder"; } 
-                else { const parentName = activeFolderName.split('/').pop(); document.getElementById('tracker-list-title').innerHTML = `<span style="color:var(--accent); cursor:pointer;" onclick="goBackToFolder()"><i class="fas fa-arrow-left"></i> ${parentName}</span>`; }
+                else { const parentName = activeFolderName.split('/').pop(); document.getElementById('tracker-list-title').innerHTML = `<span style="color:var(--accent); cursor:pointer;" onclick="closeLayerProgrammatically()"><i class="fas fa-arrow-left"></i> ${parentName}</span>`; }
 
                 container.innerHTML = `<button class="btn-primary" style="margin-bottom:20px;" onclick="createFolder()"><i class="fas fa-plus"></i> ${activeFolderName === "" ? "Buat Folder Baru" : "Buat Sub-Folder"}</button>`;
                 
@@ -889,6 +898,9 @@
 
                 const encodedData = encodeURIComponent(JSON.stringify({ id: item.tmdb_id, title: item.title, poster_path: item.poster_path, media_type: item.media_type, runtime: item.runtime }));
                 div.onclick = function() { openSheetFromEncoded(encodedData); }; div.style.cursor = 'pointer';
+                
+                const safeTitle = item.title.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+                
                 div.innerHTML = `
                     <img src="${IMG_URL + item.poster_path}" style="width:60px; height:90px; object-fit:cover; border-radius:8px; margin-right:15px; background:#e3e3e8;">
                     <div style="flex:1; text-align:left;">
@@ -896,7 +908,7 @@
                         <div style="font-size:12px; color:${statusColor};">${statusHtml} • ${formatRuntime(item.runtime)}</div>
                         <div class="rating-pill" onclick="event.stopPropagation(); openRatingModal(${item.tmdb_id}, ${item.user_rating})"><i class="fas fa-star"></i> ${r}/10</div>
                     </div>
-                    ${sortType === 'custom' ? '<i class="fas fa-bars drag-handle" onclick="event.stopPropagation()"></i>' : `<i class="fas fa-trash-alt" style="color:#ff3b30; padding:10px; cursor:pointer;" onclick="event.stopPropagation(); showDeleteModal(${item.tmdb_id}, '${item.title.replace(/'/g, "\\'")}')"></i>`}
+                    ${sortType === 'custom' ? '<i class="fas fa-bars drag-handle" onclick="event.stopPropagation()"></i>' : `<i class="fas fa-trash-alt" style="color:#ff3b30; padding:10px; cursor:pointer;" onclick="event.stopPropagation(); showDeleteModal(${item.tmdb_id}, '${safeTitle}')"></i>`}
                 `;
                 container.appendChild(div);
             });
@@ -954,9 +966,7 @@
             } renderFriends();
         }
 
-        function openSearchFriendModal() { openLayer('search_friend'); }
-
-        async function executeSearchFriend() {
+        async function searchFriend() {
             document.getElementById('friend-search-input').blur(); 
             const input = document.getElementById('friend-search-input').value.trim().toLowerCase();
             const msg = document.getElementById('friend-search-msg'); msg.style.color = 'var(--text-main)';
@@ -966,10 +976,11 @@
             msg.innerText = "Mencari teman...";
 
             const { data } = await window.supabaseClient.from('ct_profiles').select('id, username, custom_folders').eq('username', input).single();
-            if (data) { msg.innerText = ""; closeLayerVisual('search_friend'); openFriendPanel(data); } else { msg.innerText = "Tidak ditemukan!"; msg.style.color = 'red'; }
+            if (data) { msg.innerText = ""; document.getElementById('friend-search-input').value = ""; openFriendPanel(data); } else { msg.innerText = "Tidak ditemukan!"; msg.style.color = 'red'; }
         }
 
         async function openFriendPanel(friendData) {
+            openLayer('friend_panel'); activeFriendProfile = friendData;
             document.getElementById('friend-panel-username').innerText = "@" + friendData.username;
             document.getElementById('friend-panel').style.transform = 'translateX(0)';
             document.getElementById('friend-stat-watched').innerText = "0"; document.getElementById('friend-stat-watchlist').innerText = "0"; document.getElementById('friend-stat-favorite').innerText = "0";
@@ -994,12 +1005,7 @@
             renderFriendTrackerData(); 
         }
 
-        function openFriendFolder(fPath) { friendActiveFolder = fPath; friendFilter = 'folder_view'; renderFriendTrackerData(); }
-        function goBackToFriendFolder() {
-            let parts = friendActiveFolder.split('/'); parts.pop(); friendActiveFolder = parts.join('/');
-            if(friendActiveFolder === "") { friendFilter = 'folders'; }
-            renderFriendTrackerData();
-        }
+        function openFriendFolder(fPath) { openLayer('fdir_' + fPath); friendActiveFolder = fPath; friendFilter = 'folder_view'; renderFriendTrackerData(); }
 
         function renderFriendTrackerData() {
             const container = document.getElementById('friend-tracker-content'); container.innerHTML = '';
@@ -1013,7 +1019,7 @@
             if(friendFilter === 'folders' || friendFilter === 'folder_view') {
                 document.getElementById('sort-friend-tracker').style.display = 'block';
                 if(friendActiveFolder === "") { document.getElementById('friend-list-title').innerText = "Daftar Folder Teman"; } 
-                else { const parentName = friendActiveFolder.split('/').pop(); document.getElementById('friend-list-title').innerHTML = `<span style="color:var(--accent); cursor:pointer;" onclick="goBackToFriendFolder()"><i class="fas fa-arrow-left"></i> ${parentName}</span>`; }
+                else { const parentName = friendActiveFolder.split('/').pop(); document.getElementById('friend-list-title').innerHTML = `<span style="color:var(--accent); cursor:pointer;" onclick="closeLayerProgrammatically()"><i class="fas fa-arrow-left"></i> ${parentName}</span>`; }
 
                 const subs = getDirectSubfolders(friendActiveFolder, friendFolders);
                 subs.forEach(f => {
