@@ -407,7 +407,7 @@
             <div class="avatar-wrapper" style="margin-bottom: 10px;"><img src="" id="friend-panel-avatar" class="avatar-img"></div>
             <h3 id="friend-panel-username" style="margin-top:0; font-size: 24px; letter-spacing:-0.5px;">@username</h3>
             
-            <div style="display:flex; justify-content:space-around; margin-top: 20px; padding-top: 15px; border-top: 0.5px solid #e3e3e8;">
+            <div style="display:flex; justify-content:space-around; margin: 20px 0; padding: 15px 0; border-top: 0.5px solid #e3e3e8;">
                 <div><div style="font-size:22px; font-weight:700; color:var(--accent);" id="friend-stat-watched">0</div><div style="font-size:12px; color:var(--text-muted); font-weight:500;">Selesai</div></div>
                 <div><div style="font-size:22px; font-weight:700; color:var(--danger);" id="friend-stat-favorite">0</div><div style="font-size:12px; color:var(--text-muted); font-weight:500;">Favorit</div></div>
                 <div><div style="font-size:22px; font-weight:700; color:#ff9500;" id="friend-stat-watchlist">0</div><div style="font-size:12px; color:var(--text-muted); font-weight:500;">Nanti</div></div>
@@ -734,7 +734,7 @@
             document.getElementById('delete-modal-overlay').classList.add('active'); 
         }
         
-        // PERBAIKAN 1: PENGGUNAAN MATCH() UNTUK HAPUS FILM
+        // PERBAIKAN: Hapus Ganda (Berdasarkan ID & Detail TMDB) untuk mencegah data hantu
         async function executeDeleteMovie() {
             if(!pendingDeleteId) return; const idToDel = pendingDeleteId; closeLayerProgrammatically(); 
             
@@ -746,7 +746,10 @@
             calculateWatchTime(trackerDataCache, 'stat-watchtime'); showToast("Berhasil dihapus."); updateAllBadges();
             
             if(navigator.onLine && itemToDelete) {
-                await window.supabaseClient.from('ct_watch_history').delete().match({ user_id: currentUser.id, tmdb_id: itemToDelete.tmdb_id, media_type: itemToDelete.media_type });
+                try {
+                    await window.supabaseClient.from('ct_watch_history').delete().eq('id', itemToDelete.id);
+                    await window.supabaseClient.from('ct_watch_history').delete().eq('user_id', currentUser.id).eq('tmdb_id', itemToDelete.tmdb_id).eq('media_type', itemToDelete.media_type);
+                } catch(e) {}
             }
         }
 
@@ -1041,7 +1044,6 @@
             document.getElementById(elementId).innerText = timeStr;
         }
 
-        // PERBAIKAN 2: PENGGUNAAN MATCH() UNTUK RUNTIMES DAN DRAG/SORT
         async function healRuntimes(dataArray) {
             if(!navigator.onLine) return;
             let needsRender = false;
@@ -1168,97 +1170,6 @@
                     }
                 });
             }
-        }
-
-        // PERBAIKAN 3: DAFTAR TEMAN
-        async function fetchFriends() {
-            const cacheFriends = localStorage.getItem('ct_friends_'+currentUser.id);
-            if(cacheFriends) { 
-                myFriends = JSON.parse(cacheFriends); 
-                renderFriends(); 
-            } else {
-                document.getElementById('friend-list-container').innerHTML = '<p style="font-size: 14px; color: var(--text-muted);">Memuat teman...</p>';
-            }
-
-            if(!navigator.onLine) return;
-            const { data, error } = await window.supabaseClient.from('ct_friends').select('friend_id, ct_profiles!friend_id(username, avatar_url)').eq('user_id', currentUser.id);
-            
-            if (error) {
-                if(!cacheFriends) document.getElementById('friend-list-container').innerHTML = '<p style="font-size: 14px; color: var(--danger);">Gagal memuat teman.</p>';
-                return;
-            }
-            
-            if(data) { 
-                myFriends = data; 
-                localStorage.setItem('ct_friends_'+currentUser.id, JSON.stringify(myFriends)); 
-                renderFriends(); 
-            }
-        }
-        
-        function renderFriends() {
-            const container = document.getElementById('friend-list-container'); container.innerHTML = '';
-            if(myFriends.length === 0) { container.innerHTML = '<p style="font-size: 14px; color: var(--text-muted);">Belum ada teman yang diikuti.</p>'; return; }
-            myFriends.forEach(f => {
-                const username = f.ct_profiles.username; const avatar = f.ct_profiles.avatar_url || `https://ui-avatars.com/api/?name=${username}&background=007aff&color=fff&size=200`;
-                const div = document.createElement('div'); div.className = 'friend-list-item';
-                div.onclick = () => { openFriendPanel({id: f.friend_id, username: username, custom_folders: []}); };
-                div.innerHTML = `<img src="${avatar}"><div class="name">@${username}</div><i class="fas fa-chevron-right" style="color:var(--text-muted); font-size:14px;"></i>`;
-                container.appendChild(div);
-            });
-        }
-        async function toggleFriend() {
-            if(!currentUser || !activeFriendProfile) return; const btn = document.getElementById('btn-toggle-friend');
-            const isFollowing = myFriends.find(f => f.friend_id === activeFriendProfile.id);
-            if(isFollowing) {
-                myFriends = myFriends.filter(f => f.friend_id !== activeFriendProfile.id);
-                localStorage.setItem('ct_friends_'+currentUser.id, JSON.stringify(myFriends));
-                btn.innerHTML = `<i class="fas fa-user-plus"></i> Ikuti`; btn.style.background = 'var(--accent)'; btn.style.color = 'white';
-                if(navigator.onLine) await window.supabaseClient.from('ct_friends').delete().eq('user_id', currentUser.id).eq('friend_id', activeFriendProfile.id);
-            } else {
-                myFriends.push({ friend_id: activeFriendProfile.id, ct_profiles: { username: activeFriendProfile.username, avatar_url: document.getElementById('friend-panel-avatar').src } });
-                localStorage.setItem('ct_friends_'+currentUser.id, JSON.stringify(myFriends));
-                btn.innerHTML = `<i class="fas fa-user-check"></i> Mengikuti`; btn.style.background = 'rgba(0,0,0,0.05)'; btn.style.color = 'var(--text-main)';
-                if(navigator.onLine) await window.supabaseClient.from('ct_friends').insert({ user_id: currentUser.id, friend_id: activeFriendProfile.id });
-            } renderFriends();
-        }
-
-        async function searchFriend() {
-            document.getElementById('friend-search-input').blur(); 
-            const input = document.getElementById('friend-search-input').value.trim().toLowerCase();
-            const msg = document.getElementById('friend-search-msg'); msg.style.color = 'var(--text-main)';
-            if(!input) { msg.innerText = "Masukkan username terlebih dahulu."; msg.style.color = 'var(--danger)'; return; }
-            if(currentUser && input === currentUser.email.split('@')[0]) { msg.innerText = "Ini adalah username kamu sendiri."; msg.style.color = 'var(--danger)'; return; }
-            if(!navigator.onLine) { msg.innerText = "Pencarian butuh koneksi internet."; msg.style.color = 'var(--danger)'; return; }
-            msg.innerText = "Mencari teman...";
-
-            const { data } = await window.supabaseClient.from('ct_profiles').select('id, username, custom_folders').eq('username', input).single();
-            if (data) { msg.innerText = ""; document.getElementById('friend-search-input').value = ""; openFriendPanel(data); } else { msg.innerText = "Akun tidak ditemukan."; msg.style.color = 'var(--danger)'; }
-        }
-
-        async function openFriendPanel(friendData) {
-            openLayer('friend_panel'); activeFriendProfile = friendData;
-            document.getElementById('friend-panel-username').innerText = "@" + friendData.username;
-            document.getElementById('friend-panel').style.transform = 'translateX(0)';
-            document.getElementById('friend-stat-watched').innerText = "0"; document.getElementById('friend-stat-watchlist').innerText = "0"; document.getElementById('friend-stat-favorite').innerText = "0";
-            
-            const isFollowing = myFriends.find(f => f.friend_id === friendData.id); const btn = document.getElementById('btn-toggle-friend');
-            if(isFollowing) { btn.innerHTML = `<i class="fas fa-user-check"></i> Mengikuti`; btn.style.background = 'rgba(0,0,0,0.05)'; btn.style.color = 'var(--text-main)'; } 
-            else { btn.innerHTML = `<i class="fas fa-user-plus"></i> Ikuti`; btn.style.background = 'var(--accent)'; btn.style.color = 'white'; }
-
-            const profileReq = await fetchUserProfile(friendData.id, 'friend-panel-avatar');
-            friendFolders = profileReq?.custom_folders || []; friendFilter = 'all'; document.getElementById('f-btn-all').click();
-            
-            if(navigator.onLine) {
-                const { data } = await window.supabaseClient.from('ct_watch_history').select('*').eq('user_id', friendData.id);
-                if (data) { friendTrackerCache = data; renderFriendTrackerData(); calculateWatchTime(friendTrackerCache, 'friend-stat-watchtime'); healRuntimes(friendTrackerCache); }
-            } else { document.getElementById('friend-tracker-content').innerHTML = "<p style='font-size:14px; text-align:center;'>Internet Offline.</p>"; }
-        }
-        
-        function setFriendFilter(filterType, btnElement) { 
-            friendFilter = filterType; document.querySelectorAll('#friend-panel .segmented-btn').forEach(btn => btn.classList.remove('active')); 
-            if(btnElement) btnElement.classList.add('active'); 
-            if(filterType !== 'folders' && filterType !== 'folder_view') friendActiveFolder = '';
-            renderFriendTrackerData(); 
         }
 
         function openFriendFolder(encodedPath) { 
