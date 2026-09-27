@@ -407,7 +407,7 @@
             <div class="avatar-wrapper" style="margin-bottom: 10px;"><img src="" id="friend-panel-avatar" class="avatar-img"></div>
             <h3 id="friend-panel-username" style="margin-top:0; font-size: 24px; letter-spacing:-0.5px;">@username</h3>
             
-            <div style="display:flex; justify-content:space-around; margin: 20px 0; padding: 15px 0; border-top: 0.5px solid #e3e3e8;">
+            <div style="display:flex; justify-content:space-around; margin-top: 20px; padding-top: 15px; border-top: 0.5px solid #e3e3e8;">
                 <div><div style="font-size:22px; font-weight:700; color:var(--accent);" id="friend-stat-watched">0</div><div style="font-size:12px; color:var(--text-muted); font-weight:500;">Selesai</div></div>
                 <div><div style="font-size:22px; font-weight:700; color:var(--danger);" id="friend-stat-favorite">0</div><div style="font-size:12px; color:var(--text-muted); font-weight:500;">Favorit</div></div>
                 <div><div style="font-size:22px; font-weight:700; color:#ff9500;" id="friend-stat-watchlist">0</div><div style="font-size:12px; color:var(--text-muted); font-weight:500;">Nanti</div></div>
@@ -719,9 +719,9 @@
             const item = trackerDataCache.find(i => i.id == activeRatingId); if(item) item.user_rating = val; 
             localStorage.setItem('ct_tracker_'+currentUser.id, JSON.stringify(trackerDataCache));
             renderTrackerData(); closeLayerProgrammatically(); showToast("Penilaian disimpan!");
-            
-            // PERBAIKAN: Selalu gunakan tmdb_id & media_type untuk sinkronisasi server agar anti-gagal
-            if(navigator.onLine && item) await window.supabaseClient.from('ct_watch_history').update({ user_rating: val }).eq('user_id', currentUser.id).eq('tmdb_id', item.tmdb_id).eq('media_type', item.media_type);
+            if(navigator.onLine && item) {
+                await window.supabaseClient.from('ct_watch_history').update({ user_rating: val }).match({ user_id: currentUser.id, tmdb_id: item.tmdb_id, media_type: item.media_type });
+            }
         }
 
         function executeExitApp() { if (navigator.app) { navigator.app.exitApp(); } else if (navigator.device) { navigator.device.exitApp(); } else { window.close(); } }
@@ -734,21 +734,19 @@
             document.getElementById('delete-modal-overlay').classList.add('active'); 
         }
         
+        // PERBAIKAN 1: PENGGUNAAN MATCH() UNTUK HAPUS FILM
         async function executeDeleteMovie() {
             if(!pendingDeleteId) return; const idToDel = pendingDeleteId; closeLayerProgrammatically(); 
             
             const el = document.querySelector(`.list-item[data-unique-id="${idToDel}"]`); if(el) { el.style.opacity = '0'; el.style.transform = 'scale(0.9)'; setTimeout(() => el.remove(), 250); }
             
-            // PERBAIKAN: Ambil itemnya dulu sebelum dihapus dari memori
             const itemToDelete = trackerDataCache.find(item => item.id == idToDel);
-            
             trackerDataCache = trackerDataCache.filter(item => item.id != idToDel); 
             localStorage.setItem('ct_tracker_'+currentUser.id, JSON.stringify(trackerDataCache));
             calculateWatchTime(trackerDataCache, 'stat-watchtime'); showToast("Berhasil dihapus."); updateAllBadges();
             
-            // PERBAIKAN: Hapus di database menggunakan tmdb_id asli, bukan id lokal, jadi 100% pasti terhapus
             if(navigator.onLine && itemToDelete) {
-                await window.supabaseClient.from('ct_watch_history').delete().eq('user_id', currentUser.id).eq('tmdb_id', itemToDelete.tmdb_id).eq('media_type', itemToDelete.media_type);
+                await window.supabaseClient.from('ct_watch_history').delete().match({ user_id: currentUser.id, tmdb_id: itemToDelete.tmdb_id, media_type: itemToDelete.media_type });
             }
         }
 
@@ -1043,6 +1041,7 @@
             document.getElementById(elementId).innerText = timeStr;
         }
 
+        // PERBAIKAN 2: PENGGUNAAN MATCH() UNTUK RUNTIMES DAN DRAG/SORT
         async function healRuntimes(dataArray) {
             if(!navigator.onLine) return;
             let needsRender = false;
@@ -1056,10 +1055,8 @@
                             if(tvm.ok) { const tvd = await tvm.json(); r = tvd.averageRuntime || tvd.runtime || 0; }
                         }
                         if (r === 0) r = item.media_type === 'tv' ? 45 : 120; 
-                        
-                        // PERBAIKAN: Gunakan tmdb_id & media_type untuk Sinkronisasi Healing Runtime
                         item.runtime = r; 
-                        await window.supabaseClient.from('ct_watch_history').update({runtime: r}).eq('user_id', currentUser.id).eq('tmdb_id', item.tmdb_id).eq('media_type', item.media_type); 
+                        await window.supabaseClient.from('ct_watch_history').update({runtime: r}).match({ user_id: currentUser.id, tmdb_id: item.tmdb_id, media_type: item.media_type }); 
                         needsRender = true;
                     } catch(e){}
                 }
@@ -1140,7 +1137,6 @@
                 
                 div.onclick = function() { openSheetFromEncoded(encodedData); }; 
                 
-                // PERBAIKAN: Bungkus ID item ke dalam tanda kutip tunggal ('${item.id}') untuk menghindari Syntax Error jika ID bertipe UUID huruf campur angka.
                 div.innerHTML = `
                     <img src="${IMG_URL + item.poster_path}" style="width:65px; height:95px; object-fit:cover; border-radius:10px; margin-right:15px; background:#e3e3e8; box-shadow: 0 2px 6px rgba(0,0,0,0.06);">
                     <div style="flex:1; text-align:left;">
@@ -1162,19 +1158,107 @@
                         if(prevEl && nextEl && prevEl.dataset.uniqueId && nextEl.dataset.uniqueId) { const pOrder = parseFloat(trackerDataCache.find(i=>i.id == prevEl.dataset.uniqueId).custom_order || 0); const nOrder = parseFloat(trackerDataCache.find(i=>i.id == nextEl.dataset.uniqueId).custom_order || 0); newOrder = (pOrder + nOrder) / 2; } 
                         else if(prevEl && prevEl.dataset.uniqueId) { newOrder = parseFloat(trackerDataCache.find(i=>i.id == prevEl.dataset.uniqueId).custom_order || 0) - 10; } 
                         else if(nextEl && nextEl.dataset.uniqueId) { newOrder = parseFloat(trackerDataCache.find(i=>i.id == nextEl.dataset.uniqueId).custom_order || 0) + 10; }
-                        
-                        const movedItem = trackerDataCache.find(i=>i.id == movedEl.dataset.uniqueId);
-                        if(movedItem) movedItem.custom_order = newOrder;
-                        
+                        trackerDataCache.find(i=>i.id == movedEl.dataset.uniqueId).custom_order = newOrder;
                         localStorage.setItem('ct_tracker_'+currentUser.id, JSON.stringify(trackerDataCache));
                         
-                        // PERBAIKAN: Gunakan tmdb_id & media_type untuk memastikan perpindahan disimpan
-                        if(navigator.onLine && movedItem) { 
-                            window.supabaseClient.from('ct_watch_history').update({ custom_order: newOrder }).eq('user_id', currentUser.id).eq('tmdb_id', movedItem.tmdb_id).eq('media_type', movedItem.media_type); 
+                        if(navigator.onLine) { 
+                            const movedItem = trackerDataCache.find(i=>i.id == movedEl.dataset.uniqueId);
+                            if(movedItem) window.supabaseClient.from('ct_watch_history').update({ custom_order: newOrder }).match({ user_id: currentUser.id, tmdb_id: movedItem.tmdb_id, media_type: movedItem.media_type }); 
                         }
                     }
                 });
             }
+        }
+
+        // PERBAIKAN 3: DAFTAR TEMAN
+        async function fetchFriends() {
+            const cacheFriends = localStorage.getItem('ct_friends_'+currentUser.id);
+            if(cacheFriends) { 
+                myFriends = JSON.parse(cacheFriends); 
+                renderFriends(); 
+            } else {
+                document.getElementById('friend-list-container').innerHTML = '<p style="font-size: 14px; color: var(--text-muted);">Memuat teman...</p>';
+            }
+
+            if(!navigator.onLine) return;
+            const { data, error } = await window.supabaseClient.from('ct_friends').select('friend_id, ct_profiles!friend_id(username, avatar_url)').eq('user_id', currentUser.id);
+            
+            if (error) {
+                if(!cacheFriends) document.getElementById('friend-list-container').innerHTML = '<p style="font-size: 14px; color: var(--danger);">Gagal memuat teman.</p>';
+                return;
+            }
+            
+            if(data) { 
+                myFriends = data; 
+                localStorage.setItem('ct_friends_'+currentUser.id, JSON.stringify(myFriends)); 
+                renderFriends(); 
+            }
+        }
+        
+        function renderFriends() {
+            const container = document.getElementById('friend-list-container'); container.innerHTML = '';
+            if(myFriends.length === 0) { container.innerHTML = '<p style="font-size: 14px; color: var(--text-muted);">Belum ada teman yang diikuti.</p>'; return; }
+            myFriends.forEach(f => {
+                const username = f.ct_profiles.username; const avatar = f.ct_profiles.avatar_url || `https://ui-avatars.com/api/?name=${username}&background=007aff&color=fff&size=200`;
+                const div = document.createElement('div'); div.className = 'friend-list-item';
+                div.onclick = () => { openFriendPanel({id: f.friend_id, username: username, custom_folders: []}); };
+                div.innerHTML = `<img src="${avatar}"><div class="name">@${username}</div><i class="fas fa-chevron-right" style="color:var(--text-muted); font-size:14px;"></i>`;
+                container.appendChild(div);
+            });
+        }
+        async function toggleFriend() {
+            if(!currentUser || !activeFriendProfile) return; const btn = document.getElementById('btn-toggle-friend');
+            const isFollowing = myFriends.find(f => f.friend_id === activeFriendProfile.id);
+            if(isFollowing) {
+                myFriends = myFriends.filter(f => f.friend_id !== activeFriendProfile.id);
+                localStorage.setItem('ct_friends_'+currentUser.id, JSON.stringify(myFriends));
+                btn.innerHTML = `<i class="fas fa-user-plus"></i> Ikuti`; btn.style.background = 'var(--accent)'; btn.style.color = 'white';
+                if(navigator.onLine) await window.supabaseClient.from('ct_friends').delete().eq('user_id', currentUser.id).eq('friend_id', activeFriendProfile.id);
+            } else {
+                myFriends.push({ friend_id: activeFriendProfile.id, ct_profiles: { username: activeFriendProfile.username, avatar_url: document.getElementById('friend-panel-avatar').src } });
+                localStorage.setItem('ct_friends_'+currentUser.id, JSON.stringify(myFriends));
+                btn.innerHTML = `<i class="fas fa-user-check"></i> Mengikuti`; btn.style.background = 'rgba(0,0,0,0.05)'; btn.style.color = 'var(--text-main)';
+                if(navigator.onLine) await window.supabaseClient.from('ct_friends').insert({ user_id: currentUser.id, friend_id: activeFriendProfile.id });
+            } renderFriends();
+        }
+
+        async function searchFriend() {
+            document.getElementById('friend-search-input').blur(); 
+            const input = document.getElementById('friend-search-input').value.trim().toLowerCase();
+            const msg = document.getElementById('friend-search-msg'); msg.style.color = 'var(--text-main)';
+            if(!input) { msg.innerText = "Masukkan username terlebih dahulu."; msg.style.color = 'var(--danger)'; return; }
+            if(currentUser && input === currentUser.email.split('@')[0]) { msg.innerText = "Ini adalah username kamu sendiri."; msg.style.color = 'var(--danger)'; return; }
+            if(!navigator.onLine) { msg.innerText = "Pencarian butuh koneksi internet."; msg.style.color = 'var(--danger)'; return; }
+            msg.innerText = "Mencari teman...";
+
+            const { data } = await window.supabaseClient.from('ct_profiles').select('id, username, custom_folders').eq('username', input).single();
+            if (data) { msg.innerText = ""; document.getElementById('friend-search-input').value = ""; openFriendPanel(data); } else { msg.innerText = "Akun tidak ditemukan."; msg.style.color = 'var(--danger)'; }
+        }
+
+        async function openFriendPanel(friendData) {
+            openLayer('friend_panel'); activeFriendProfile = friendData;
+            document.getElementById('friend-panel-username').innerText = "@" + friendData.username;
+            document.getElementById('friend-panel').style.transform = 'translateX(0)';
+            document.getElementById('friend-stat-watched').innerText = "0"; document.getElementById('friend-stat-watchlist').innerText = "0"; document.getElementById('friend-stat-favorite').innerText = "0";
+            
+            const isFollowing = myFriends.find(f => f.friend_id === friendData.id); const btn = document.getElementById('btn-toggle-friend');
+            if(isFollowing) { btn.innerHTML = `<i class="fas fa-user-check"></i> Mengikuti`; btn.style.background = 'rgba(0,0,0,0.05)'; btn.style.color = 'var(--text-main)'; } 
+            else { btn.innerHTML = `<i class="fas fa-user-plus"></i> Ikuti`; btn.style.background = 'var(--accent)'; btn.style.color = 'white'; }
+
+            const profileReq = await fetchUserProfile(friendData.id, 'friend-panel-avatar');
+            friendFolders = profileReq?.custom_folders || []; friendFilter = 'all'; document.getElementById('f-btn-all').click();
+            
+            if(navigator.onLine) {
+                const { data } = await window.supabaseClient.from('ct_watch_history').select('*').eq('user_id', friendData.id);
+                if (data) { friendTrackerCache = data; renderFriendTrackerData(); calculateWatchTime(friendTrackerCache, 'friend-stat-watchtime'); healRuntimes(friendTrackerCache); }
+            } else { document.getElementById('friend-tracker-content').innerHTML = "<p style='font-size:14px; text-align:center;'>Internet Offline.</p>"; }
+        }
+        
+        function setFriendFilter(filterType, btnElement) { 
+            friendFilter = filterType; document.querySelectorAll('#friend-panel .segmented-btn').forEach(btn => btn.classList.remove('active')); 
+            if(btnElement) btnElement.classList.add('active'); 
+            if(filterType !== 'folders' && filterType !== 'folder_view') friendActiveFolder = '';
+            renderFriendTrackerData(); 
         }
 
         function openFriendFolder(encodedPath) { 
