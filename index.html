@@ -441,7 +441,6 @@
     </div>
 
     <!-- ================= JAVASCRIPT LIBRARIES ================= -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
 
@@ -451,7 +450,7 @@
         function safeEncodeStr(str) { return encodeURIComponent(str).replace(/'/g, "%27"); }
 
         window.addEventListener('offline', () => { document.getElementById('offline-banner').style.display = 'block'; });
-        window.addEventListener('online', () => { document.getElementById('offline-banner').style.display = 'none'; fetchAndRenderTracker(); });
+        window.addEventListener('online', () => { document.getElementById('offline-banner').style.display = 'none'; fetchAndRenderTracker().catch(e=>{}); });
         if(!navigator.onLine) document.getElementById('offline-banner').style.display = 'block';
 
         function formatRuntime(mins) {
@@ -703,8 +702,10 @@
         async function applyCrop() {
             if(!cropper || !currentUser) return; showToast("Menyimpan foto...");
             const canvas = cropper.getCroppedCanvas({ width: 400, height: 400 }); const base64Avatar = canvas.toDataURL('image/jpeg', 0.85); document.getElementById('profile-avatar').src = base64Avatar; closeLayerProgrammatically(); 
-            const { error } = await window.supabaseClient.from('ct_profiles').update({ avatar_url: base64Avatar }).eq('id', currentUser.id);
-            if(!error) { showToast("Foto diperbarui!"); localStorage.setItem('ct_profile_'+currentUser.id, JSON.stringify({...JSON.parse(localStorage.getItem('ct_profile_'+currentUser.id) || '{}'), avatar_url: base64Avatar})); }
+            try {
+                const { error } = await window.supabaseClient.from('ct_profiles').update({ avatar_url: base64Avatar }).eq('id', currentUser.id);
+                if(!error) { showToast("Foto diperbarui!"); localStorage.setItem('ct_profile_'+currentUser.id, JSON.stringify({...JSON.parse(localStorage.getItem('ct_profile_'+currentUser.id) || '{}'), avatar_url: base64Avatar})); }
+            } catch(e) {}
         }
 
         function openRatingModal(dbUniqueId, currentRating) {
@@ -720,7 +721,9 @@
             localStorage.setItem('ct_tracker_'+currentUser.id, JSON.stringify(trackerDataCache));
             renderTrackerData(); closeLayerProgrammatically(); showToast("Penilaian disimpan!");
             if(navigator.onLine && item) {
-                await window.supabaseClient.from('ct_watch_history').update({ user_rating: val }).match({ user_id: currentUser.id, tmdb_id: item.tmdb_id, media_type: item.media_type });
+                try {
+                    await window.supabaseClient.from('ct_watch_history').update({ user_rating: val }).match({ user_id: currentUser.id, tmdb_id: item.tmdb_id, media_type: item.media_type });
+                } catch(e) {}
             }
         }
 
@@ -734,7 +737,7 @@
             document.getElementById('delete-modal-overlay').classList.add('active'); 
         }
         
-        // PERBAIKAN: Hapus Ganda (Berdasarkan ID & Detail TMDB) untuk mencegah data hantu
+        // PERBAIKAN: Hapus Ganda & Independen
         async function executeDeleteMovie() {
             if(!pendingDeleteId) return; const idToDel = pendingDeleteId; closeLayerProgrammatically(); 
             
@@ -748,19 +751,15 @@
             if(navigator.onLine && itemToDelete) {
                 try {
                     await window.supabaseClient.from('ct_watch_history').delete().eq('id', itemToDelete.id);
-                    await window.supabaseClient.from('ct_watch_history').delete().eq('user_id', currentUser.id).eq('tmdb_id', itemToDelete.tmdb_id).eq('media_type', itemToDelete.media_type);
+                    await window.supabaseClient.from('ct_watch_history').delete().match({ user_id: currentUser.id, tmdb_id: itemToDelete.tmdb_id, media_type: itemToDelete.media_type });
                 } catch(e) {}
             }
         }
 
+        // PERBAIKAN: Script Injection yang Pasti Jalan sebelum Cek Session
         const SUPABASE_URL = 'https://dthgwnuycspqnscldoci.supabase.co'; const SUPABASE_ANON_KEY = 'sb_publishable_rrjrH0rdRLAIXhUVzWd_wQ_3An40fkC';
         const persistentStorage = { getItem: (key) => { try { return window.localStorage.getItem(key); } catch(e) { return null; } }, setItem: (key, value) => { try { window.localStorage.setItem(key, value); } catch(e) {} }, removeItem: (key) => { try { window.localStorage.removeItem(key); } catch(e) {} } };
         
-        if (window.supabase) {
-            window.supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth: { storage: persistentStorage, autoRefreshToken: true, persistSession: true } });
-            checkSession();
-        }
-
         window.onload = async () => {
             history.replaceState({ page: 'home' }, '');
             if(navigator.onLine) {
@@ -768,42 +767,59 @@
                 setTimeout(() => { fetchMovies('/discover/movie?with_companies=420', 'marvel-container'); }, 600);
                 setTimeout(() => { fetchMovies('/discover/movie?with_companies=12806|9993', 'dc-container'); }, 1100);
             }
+            
+            const script = document.createElement('script');
+            script.src = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2";
+            script.onload = () => {
+                window.supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth: { storage: persistentStorage, autoRefreshToken: true, persistSession: true } });
+                checkSession();
+            };
+            document.body.appendChild(script);
         };
 
         function generateDummyEmail(rawUsername) { return rawUsername.toLowerCase().replace(/\s+/g, '') + "@cinetracker.app"; }
         
         async function fetchUserProfile(userId, imgElementId) {
-            const cacheProfile = localStorage.getItem('ct_profile_'+userId);
-            if(cacheProfile) {
-                const data = JSON.parse(cacheProfile);
-                document.getElementById(imgElementId).src = (data && data.avatar_url) ? data.avatar_url : `https://ui-avatars.com/api/?name=${data?.username||'User'}&background=007aff&color=fff&size=200`;
-                if (userId === currentUser?.id) { userFolders = data?.custom_folders || []; updateFolderDropdowns(); }
-            }
+            try {
+                const cacheProfile = localStorage.getItem('ct_profile_'+userId);
+                if(cacheProfile) {
+                    const data = JSON.parse(cacheProfile);
+                    document.getElementById(imgElementId).src = (data && data.avatar_url) ? data.avatar_url : `https://ui-avatars.com/api/?name=${data?.username||'User'}&background=007aff&color=fff&size=200`;
+                    if (userId === currentUser?.id) { userFolders = data?.custom_folders || []; updateFolderDropdowns(); }
+                }
 
-            if(!navigator.onLine) return; 
-            const { data } = await window.supabaseClient.from('ct_profiles').select('avatar_url, username, custom_folders').eq('id', userId).single();
-            if(data) {
-                localStorage.setItem('ct_profile_'+userId, JSON.stringify(data));
-                document.getElementById(imgElementId).src = (data && data.avatar_url) ? data.avatar_url : `https://ui-avatars.com/api/?name=${data?.username||'User'}&background=007aff&color=fff&size=200`;
-                if (userId === currentUser?.id) { userFolders = data?.custom_folders || []; updateFolderDropdowns(); }
-            }
+                if(!navigator.onLine) return; 
+                const { data } = await window.supabaseClient.from('ct_profiles').select('avatar_url, username, custom_folders').eq('id', userId).single();
+                if(data) {
+                    localStorage.setItem('ct_profile_'+userId, JSON.stringify(data));
+                    document.getElementById(imgElementId).src = (data && data.avatar_url) ? data.avatar_url : `https://ui-avatars.com/api/?name=${data?.username||'User'}&background=007aff&color=fff&size=200`;
+                    if (userId === currentUser?.id) { userFolders = data?.custom_folders || []; updateFolderDropdowns(); }
+                }
+            } catch(e) {}
         }
 
+        // PERBAIKAN: Check Session Kebal Error Beruntun
         async function checkSession() {
-            if(!window.supabaseClient) return; const { data } = await window.supabaseClient.auth.getSession();
-            if (data && data.session) {
-                currentUser = data.session.user; document.getElementById('auth-section').style.display = 'none'; document.getElementById('user-section').style.display = 'block';
-                document.getElementById('display-username').innerText = "@" + currentUser.email.split('@')[0];
-                
-                await fetchUserProfile(currentUser.id, 'profile-avatar'); 
-                fetchFriends(); fetchAndRenderTracker(); 
-            } else {
-                currentUser = null; document.getElementById('auth-section').style.display = 'block'; document.getElementById('user-section').style.display = 'none';
-                const trackerContent = document.getElementById('tracker-content');
-                if (trackerContent) trackerContent.innerHTML = '<div class="auth-container" style="text-align:center;"><p style="color:#8e8e93; font-size:14px;">Silakan login di tab Profile.</p></div>';
-                document.getElementById('friend-list-container').innerHTML = '<p style="font-size: 14px; color: var(--text-muted);">Silakan login.</p>';
-            }
+            if(!window.supabaseClient) return; 
+            try {
+                const { data } = await window.supabaseClient.auth.getSession();
+                if (data && data.session) {
+                    currentUser = data.session.user; document.getElementById('auth-section').style.display = 'none'; document.getElementById('user-section').style.display = 'block';
+                    document.getElementById('display-username').innerText = "@" + currentUser.email.split('@')[0];
+                    
+                    // Eksekusi secara independen. Jika foto gagal muat, daftar film tetap jalan.
+                    fetchUserProfile(currentUser.id, 'profile-avatar').catch(e=>{}); 
+                    fetchFriends().catch(e=>{}); 
+                    fetchAndRenderTracker().catch(e=>{}); 
+                } else {
+                    currentUser = null; document.getElementById('auth-section').style.display = 'block'; document.getElementById('user-section').style.display = 'none';
+                    const trackerContent = document.getElementById('tracker-content');
+                    if (trackerContent) trackerContent.innerHTML = '<div class="auth-container" style="text-align:center;"><p style="color:#8e8e93; font-size:14px;">Silakan login di tab Profile.</p></div>';
+                    document.getElementById('friend-list-container').innerHTML = '<p style="font-size: 14px; color: var(--text-muted);">Silakan login.</p>';
+                }
+            } catch(e) {}
         }
+        
         async function handleRegister() {
             const rawUsername = document.getElementById('username').value; const password = document.getElementById('password').value;
             if(!rawUsername || !password) return document.getElementById('auth-msg').innerText = "Mohon isi semua bidang.";
@@ -864,7 +880,9 @@
             let pCache = JSON.parse(localStorage.getItem('ct_profile_'+currentUser.id)) || {}; pCache.custom_folders = userFolders; localStorage.setItem('ct_profile_'+currentUser.id, JSON.stringify(pCache));
             updateFolderDropdowns(); renderTrackerData(); showToast("Folder Dibuat!");
             
-            if(navigator.onLine) await window.supabaseClient.from('ct_profiles').update({custom_folders: userFolders}).eq('id', currentUser.id);
+            if(navigator.onLine) {
+                try { await window.supabaseClient.from('ct_profiles').update({custom_folders: userFolders}).eq('id', currentUser.id); } catch(e){}
+            }
         }
 
         let folderPressTimer; let isFolderLongPress = false; let activeActionFolder = ""; let touchStartY = 0;
@@ -940,8 +958,10 @@
             updateFolderDropdowns(); renderTrackerData(); showToast("Nama diubah!");
 
             if(navigator.onLine) {
-                await window.supabaseClient.from('ct_profiles').update({custom_folders: userFolders}).eq('id', currentUser.id);
-                await window.supabaseClient.from('ct_watch_history').update({folder_name: newPath}).eq('user_id', currentUser.id).eq('folder_name', oldPath);
+                try {
+                    await window.supabaseClient.from('ct_profiles').update({custom_folders: userFolders}).eq('id', currentUser.id);
+                    await window.supabaseClient.from('ct_watch_history').update({folder_name: newPath}).eq('user_id', currentUser.id).eq('folder_name', oldPath);
+                } catch(e) {}
             }
         }
 
@@ -967,8 +987,10 @@
             updateFolderDropdowns(); renderTrackerData(); showToast("Folder dihapus.");
 
             if(navigator.onLine) {
-                await window.supabaseClient.from('ct_profiles').update({custom_folders: userFolders}).eq('id', currentUser.id);
-                await window.supabaseClient.from('ct_watch_history').update({folder_name: null}).eq('user_id', currentUser.id).like('folder_name', folderPath + '%');
+                try {
+                    await window.supabaseClient.from('ct_profiles').update({custom_folders: userFolders}).eq('id', currentUser.id);
+                    await window.supabaseClient.from('ct_watch_history').update({folder_name: null}).eq('user_id', currentUser.id).like('folder_name', folderPath + '%');
+                } catch(e) {}
             }
         }
 
@@ -988,6 +1010,7 @@
             saveToTracker(status, seasonData);
         }
 
+        // PERBAIKAN: Update ID Lokal dengan ID Asli Database Secara Instan
         async function saveToTracker(status, seasonData = null) {
             if(!currentUser) { showToast("Login dulu!", "error"); closeLayerProgrammatically(); switchPageVisual('profile'); return; }
             const chosenFolder = document.getElementById('sheet-folder-select').value; const folderVal = chosenFolder === "" ? null : chosenFolder;
@@ -999,10 +1022,11 @@
 
             const existingIndex = trackerDataCache.findIndex(i => i.tmdb_id === selectedMovie.id && i.media_type === targetMediaType);
             
+            const tempLocalId = Date.now();
             if(existingIndex > -1) { 
                 trackerDataCache[existingIndex] = {...trackerDataCache[existingIndex], status: status, folder_name: folderVal}; 
             } else { 
-                const localItem = { id: Date.now(), user_id: currentUser.id, tmdb_id: selectedMovie.id, media_type: targetMediaType, title: targetTitle, poster_path: selectedMovie.poster_path, status: status, runtime: targetRuntime, custom_order: Date.now(), folder_name: folderVal, created_at: new Date().toISOString() };
+                const localItem = { id: tempLocalId, user_id: currentUser.id, tmdb_id: selectedMovie.id, media_type: targetMediaType, title: targetTitle, poster_path: selectedMovie.poster_path, status: status, runtime: targetRuntime, custom_order: tempLocalId, folder_name: folderVal, created_at: new Date().toISOString() };
                 trackerDataCache.unshift(localItem); 
             }
             
@@ -1010,29 +1034,43 @@
             showToast("Berhasil Disimpan!"); closeLayerProgrammatically(); renderTrackerData(); calculateWatchTime(trackerDataCache, 'stat-watchtime'); updateAllBadges();
 
             if(navigator.onLine) {
-                const { data: existDb } = await window.supabaseClient.from('ct_watch_history').select('id').eq('user_id', currentUser.id).eq('tmdb_id', selectedMovie.id).eq('media_type', targetMediaType).maybeSingle();
-                if (existDb) {
-                    await window.supabaseClient.from('ct_watch_history').update({ status: status, folder_name: folderVal, runtime: targetRuntime }).eq('id', existDb.id);
-                } else {
-                    const dbItem = { user_id: currentUser.id, tmdb_id: selectedMovie.id, media_type: targetMediaType, title: targetTitle, poster_path: selectedMovie.poster_path, status: status, runtime: targetRuntime, custom_order: Date.now(), folder_name: folderVal };
-                    await window.supabaseClient.from('ct_watch_history').insert([dbItem]);
-                }
+                try {
+                    const { data: existDb } = await window.supabaseClient.from('ct_watch_history').select('id').eq('user_id', currentUser.id).eq('tmdb_id', selectedMovie.id).eq('media_type', targetMediaType).maybeSingle();
+                    if (existDb) {
+                        await window.supabaseClient.from('ct_watch_history').update({ status: status, folder_name: folderVal, runtime: targetRuntime }).eq('id', existDb.id);
+                        
+                        // Timpa id lokal yang lama dengan ID asli database
+                        const localIdx = trackerDataCache.findIndex(i => i.tmdb_id === selectedMovie.id && i.media_type === targetMediaType);
+                        if(localIdx > -1) { trackerDataCache[localIdx].id = existDb.id; localStorage.setItem('ct_tracker_'+currentUser.id, JSON.stringify(trackerDataCache)); }
+                    } else {
+                        const dbItem = { user_id: currentUser.id, tmdb_id: selectedMovie.id, media_type: targetMediaType, title: targetTitle, poster_path: selectedMovie.poster_path, status: status, runtime: targetRuntime, custom_order: tempLocalId, folder_name: folderVal };
+                        const { data: newDbItem } = await window.supabaseClient.from('ct_watch_history').insert([dbItem]).select('id').single();
+                        
+                        // Timpa id fake lokal (Date.now) dengan ID asli database
+                        if (newDbItem) {
+                            const localIdx = trackerDataCache.findIndex(i => i.id === tempLocalId);
+                            if(localIdx > -1) { trackerDataCache[localIdx].id = newDbItem.id; localStorage.setItem('ct_tracker_'+currentUser.id, JSON.stringify(trackerDataCache)); }
+                        }
+                    }
+                } catch(e) {}
             }
         }
 
         async function fetchAndRenderTracker() {
             if (!currentUser) return;
-            const cacheTracker = localStorage.getItem('ct_tracker_'+currentUser.id);
-            if(cacheTracker) { trackerDataCache = JSON.parse(cacheTracker); renderTrackerData(); calculateWatchTime(trackerDataCache, 'stat-watchtime'); updateAllBadges(); }
+            try {
+                const cacheTracker = localStorage.getItem('ct_tracker_'+currentUser.id);
+                if(cacheTracker) { trackerDataCache = JSON.parse(cacheTracker); renderTrackerData(); calculateWatchTime(trackerDataCache, 'stat-watchtime'); updateAllBadges(); }
 
-            if(!navigator.onLine) return; 
+                if(!navigator.onLine) return; 
 
-            const { data, error } = await window.supabaseClient.from('ct_watch_history').select('*').eq('user_id', currentUser.id);
-            if (!error && data) { 
-                trackerDataCache = data; 
-                localStorage.setItem('ct_tracker_'+currentUser.id, JSON.stringify(trackerDataCache));
-                renderTrackerData(); calculateWatchTime(trackerDataCache, 'stat-watchtime'); healRuntimes(trackerDataCache); updateAllBadges(); 
-            }
+                const { data, error } = await window.supabaseClient.from('ct_watch_history').select('*').eq('user_id', currentUser.id);
+                if (!error && data) { 
+                    trackerDataCache = data; 
+                    localStorage.setItem('ct_tracker_'+currentUser.id, JSON.stringify(trackerDataCache));
+                    renderTrackerData(); calculateWatchTime(trackerDataCache, 'stat-watchtime'); healRuntimes(trackerDataCache); updateAllBadges(); 
+                }
+            } catch(e) {}
         }
 
         function calculateWatchTime(dataArray, elementId) {
@@ -1164,12 +1202,114 @@
                         localStorage.setItem('ct_tracker_'+currentUser.id, JSON.stringify(trackerDataCache));
                         
                         if(navigator.onLine) { 
-                            const movedItem = trackerDataCache.find(i=>i.id == movedEl.dataset.uniqueId);
-                            if(movedItem) window.supabaseClient.from('ct_watch_history').update({ custom_order: newOrder }).match({ user_id: currentUser.id, tmdb_id: movedItem.tmdb_id, media_type: movedItem.media_type }); 
+                            try {
+                                const movedItem = trackerDataCache.find(i=>i.id == movedEl.dataset.uniqueId);
+                                if(movedItem) await window.supabaseClient.from('ct_watch_history').update({ custom_order: newOrder }).match({ user_id: currentUser.id, tmdb_id: movedItem.tmdb_id, media_type: movedItem.media_type }); 
+                            } catch(e) {}
                         }
                     }
                 });
             }
+        }
+
+        async function fetchFriends() {
+            try {
+                const cacheFriends = localStorage.getItem('ct_friends_'+currentUser.id);
+                if(cacheFriends) { 
+                    myFriends = JSON.parse(cacheFriends); 
+                    renderFriends(); 
+                } else {
+                    document.getElementById('friend-list-container').innerHTML = '<p style="font-size: 14px; color: var(--text-muted);">Memuat teman...</p>';
+                }
+
+                if(!navigator.onLine) return;
+                const { data, error } = await window.supabaseClient.from('ct_friends').select('friend_id, ct_profiles!friend_id(username, avatar_url)').eq('user_id', currentUser.id);
+                
+                if (error) {
+                    if(!cacheFriends) document.getElementById('friend-list-container').innerHTML = '<p style="font-size: 14px; color: var(--text-muted);">Belum ada teman yang diikuti.</p>';
+                    return;
+                }
+                
+                if(data) { 
+                    myFriends = data; 
+                    localStorage.setItem('ct_friends_'+currentUser.id, JSON.stringify(myFriends)); 
+                    renderFriends(); 
+                }
+            } catch(e) {
+                if(myFriends.length === 0) document.getElementById('friend-list-container').innerHTML = '<p style="font-size: 14px; color: var(--text-muted);">Belum ada teman yang diikuti.</p>';
+            }
+        }
+        
+        function renderFriends() {
+            const container = document.getElementById('friend-list-container'); container.innerHTML = '';
+            if(myFriends.length === 0) { container.innerHTML = '<p style="font-size: 14px; color: var(--text-muted);">Belum ada teman yang diikuti.</p>'; return; }
+            myFriends.forEach(f => {
+                const username = f.ct_profiles.username; const avatar = f.ct_profiles.avatar_url || `https://ui-avatars.com/api/?name=${username}&background=007aff&color=fff&size=200`;
+                const div = document.createElement('div'); div.className = 'friend-list-item';
+                div.onclick = () => { openFriendPanel({id: f.friend_id, username: username, custom_folders: []}); };
+                div.innerHTML = `<img src="${avatar}"><div class="name">@${username}</div><i class="fas fa-chevron-right" style="color:var(--text-muted); font-size:14px;"></i>`;
+                container.appendChild(div);
+            });
+        }
+        async function toggleFriend() {
+            if(!currentUser || !activeFriendProfile) return; const btn = document.getElementById('btn-toggle-friend');
+            const isFollowing = myFriends.find(f => f.friend_id === activeFriendProfile.id);
+            if(isFollowing) {
+                myFriends = myFriends.filter(f => f.friend_id !== activeFriendProfile.id);
+                localStorage.setItem('ct_friends_'+currentUser.id, JSON.stringify(myFriends));
+                btn.innerHTML = `<i class="fas fa-user-plus"></i> Ikuti`; btn.style.background = 'var(--accent)'; btn.style.color = 'white';
+                if(navigator.onLine) { try { await window.supabaseClient.from('ct_friends').delete().eq('user_id', currentUser.id).eq('friend_id', activeFriendProfile.id); } catch(e){} }
+            } else {
+                myFriends.push({ friend_id: activeFriendProfile.id, ct_profiles: { username: activeFriendProfile.username, avatar_url: document.getElementById('friend-panel-avatar').src } });
+                localStorage.setItem('ct_friends_'+currentUser.id, JSON.stringify(myFriends));
+                btn.innerHTML = `<i class="fas fa-user-check"></i> Mengikuti`; btn.style.background = 'rgba(0,0,0,0.05)'; btn.style.color = 'var(--text-main)';
+                if(navigator.onLine) { try { await window.supabaseClient.from('ct_friends').insert({ user_id: currentUser.id, friend_id: activeFriendProfile.id }); } catch(e){} }
+            } renderFriends();
+        }
+
+        async function searchFriend() {
+            document.getElementById('friend-search-input').blur(); 
+            const input = document.getElementById('friend-search-input').value.trim().toLowerCase();
+            const msg = document.getElementById('friend-search-msg'); msg.style.color = 'var(--text-main)';
+            if(!input) { msg.innerText = "Masukkan username terlebih dahulu."; msg.style.color = 'var(--danger)'; return; }
+            if(currentUser && input === currentUser.email.split('@')[0]) { msg.innerText = "Ini adalah username kamu sendiri."; msg.style.color = 'var(--danger)'; return; }
+            if(!navigator.onLine) { msg.innerText = "Pencarian butuh koneksi internet."; msg.style.color = 'var(--danger)'; return; }
+            msg.innerText = "Mencari teman...";
+
+            try {
+                const { data } = await window.supabaseClient.from('ct_profiles').select('id, username, custom_folders').eq('username', input).single();
+                if (data) { msg.innerText = ""; document.getElementById('friend-search-input').value = ""; openFriendPanel(data); } else { msg.innerText = "Akun tidak ditemukan."; msg.style.color = 'var(--danger)'; }
+            } catch(e) { msg.innerText = "Gagal mencari."; msg.style.color = 'var(--danger)'; }
+        }
+
+        async function openFriendPanel(friendData) {
+            openLayer('friend_panel'); activeFriendProfile = friendData;
+            document.getElementById('friend-panel-username').innerText = "@" + friendData.username;
+            document.getElementById('friend-panel').style.transform = 'translateX(0)';
+            document.getElementById('friend-stat-watched').innerText = "0"; document.getElementById('friend-stat-watchlist').innerText = "0"; document.getElementById('friend-stat-favorite').innerText = "0";
+            
+            const isFollowing = myFriends.find(f => f.friend_id === friendData.id); const btn = document.getElementById('btn-toggle-friend');
+            if(isFollowing) { btn.innerHTML = `<i class="fas fa-user-check"></i> Mengikuti`; btn.style.background = 'rgba(0,0,0,0.05)'; btn.style.color = 'var(--text-main)'; } 
+            else { btn.innerHTML = `<i class="fas fa-user-plus"></i> Ikuti`; btn.style.background = 'var(--accent)'; btn.style.color = 'white'; }
+
+            friendFolders = []; friendFilter = 'all'; document.getElementById('f-btn-all').click();
+            
+            if(navigator.onLine) {
+                try {
+                    const profileReq = await window.supabaseClient.from('ct_profiles').select('custom_folders').eq('id', friendData.id).single();
+                    if(profileReq.data) friendFolders = profileReq.data.custom_folders || [];
+                    
+                    const { data } = await window.supabaseClient.from('ct_watch_history').select('*').eq('user_id', friendData.id);
+                    if (data) { friendTrackerCache = data; renderFriendTrackerData(); calculateWatchTime(friendTrackerCache, 'friend-stat-watchtime'); healRuntimes(friendTrackerCache); }
+                } catch(e) {}
+            } else { document.getElementById('friend-tracker-content').innerHTML = "<p style='font-size:14px; text-align:center;'>Internet Offline.</p>"; }
+        }
+        
+        function setFriendFilter(filterType, btnElement) { 
+            friendFilter = filterType; document.querySelectorAll('#friend-panel .segmented-btn').forEach(btn => btn.classList.remove('active')); 
+            if(btnElement) btnElement.classList.add('active'); 
+            if(filterType !== 'folders' && filterType !== 'folder_view') friendActiveFolder = '';
+            renderFriendTrackerData(); 
         }
 
         function openFriendFolder(encodedPath) { 
