@@ -346,7 +346,7 @@
                         <h4 style="margin: 0; font-size: 18px;">Daftar Teman</h4>
                         <button onclick="openLayer('search_friend')" style="background: rgba(0,122,255,0.1); border: none; color: var(--accent); font-weight: 600; font-size: 13px; padding: 5px 12px; border-radius: 12px; cursor:pointer;"><i class="fas fa-plus"></i> Tambah</button>
                     </div>
-                    <div id="friend-list-container"><p style="font-size: 14px; color: var(--text-muted);">Belum ada teman yang diikuti.</p></div>
+                    <div id="friend-list-container"><p style="font-size: 14px; color: var(--text-muted);">Memuat daftar teman...</p></div>
                 </div>
             </div>
         </div>
@@ -484,7 +484,6 @@
 
         function closeLayerProgrammatically() { if (modalStack.length > 0) history.back(); }
 
-        // PERBAIKAN: Menghapus logika history back (dir_) untuk navigasi folder agar tidak membeku
         function executeCloseVisual(layerId) {
             if(layerId === 'crop') { document.getElementById('crop-modal').style.display = 'none'; if(cropper) cropper.destroy(); }
             else if(layerId === 'sheet') { document.getElementById('sheet-overlay').classList.remove('active'); document.getElementById('movie-sheet').classList.remove('active'); }
@@ -498,7 +497,6 @@
             else if(layerId === 'exit') { document.getElementById('exit-modal-overlay').classList.remove('active'); }
         }
 
-        // FUNGSI NAVIGASI NAIK FOLDER KHUSUS (Tanpa modal layer/History Stack)
         function navigateUpFolder() {
             let parts = activeFolderName.split('/');
             parts.pop();
@@ -794,6 +792,9 @@
                 currentUser = null; document.getElementById('auth-section').style.display = 'block'; document.getElementById('user-section').style.display = 'none';
                 const trackerContent = document.getElementById('tracker-content');
                 if (trackerContent) trackerContent.innerHTML = '<div class="auth-container" style="text-align:center;"><p style="color:#8e8e93; font-size:14px;">Silakan login di tab Profile.</p></div>';
+                
+                // PERBAIKAN: Memastikan teks ini hanya muncul jika benar-benar belum login.
+                document.getElementById('friend-list-container').innerHTML = '<p style="font-size: 14px; color: var(--text-muted);">Silakan login.</p>';
             }
         }
         async function handleRegister() {
@@ -880,7 +881,6 @@
         function clickFolderMain(e, encodedPath) {
             if(isFolderLongPress) { e.preventDefault(); return; }
             
-            // Mengubah navigasi agar memuat folder TANPA melalui History Back (Menghindari Freeze)
             activeFolderName = decodeURIComponent(encodedPath);
             currentFilter = 'folder_view'; 
             renderTrackerData();
@@ -1067,7 +1067,6 @@
             if(currentFilter === 'folders' || currentFilter === 'folder_view') {
                 document.getElementById('sort-tracker').style.display = 'block'; 
                 
-                // PERBAIKAN: Title bar dengan onclick navigateUpFolder() yang dijamin bekerja
                 if(activeFolderName === "") { 
                     document.getElementById('tracker-list-title').innerText = "Daftar Folder"; 
                 } else { 
@@ -1160,8 +1159,99 @@
             }
         }
 
+        // PERBAIKAN: Manajemen Load State untuk Profil Teman
+        async function fetchFriends() {
+            const cacheFriends = localStorage.getItem('ct_friends_'+currentUser.id);
+            if(cacheFriends) { 
+                myFriends = JSON.parse(cacheFriends); 
+                renderFriends(); 
+            } else {
+                // Berikan status memuat agar tulisan "Silakan login" tidak muncul
+                document.getElementById('friend-list-container').innerHTML = '<p style="font-size: 14px; color: var(--text-muted);">Memuat teman...</p>';
+            }
+
+            if(!navigator.onLine) return;
+            const { data, error } = await window.supabaseClient.from('ct_friends').select('friend_id, ct_profiles!friend_id(username, avatar_url)').eq('user_id', currentUser.id);
+            
+            if (error) {
+                if(!cacheFriends) document.getElementById('friend-list-container').innerHTML = '<p style="font-size: 14px; color: var(--danger);">Gagal memuat teman.</p>';
+                return;
+            }
+            
+            if(data) { 
+                myFriends = data; 
+                localStorage.setItem('ct_friends_'+currentUser.id, JSON.stringify(myFriends)); 
+                renderFriends(); 
+            }
+        }
+        
+        function renderFriends() {
+            const container = document.getElementById('friend-list-container'); container.innerHTML = '';
+            if(myFriends.length === 0) { container.innerHTML = '<p style="font-size: 14px; color: var(--text-muted);">Belum ada teman yang diikuti.</p>'; return; }
+            myFriends.forEach(f => {
+                const username = f.ct_profiles.username; const avatar = f.ct_profiles.avatar_url || `https://ui-avatars.com/api/?name=${username}&background=007aff&color=fff&size=200`;
+                const div = document.createElement('div'); div.className = 'friend-list-item';
+                div.onclick = () => { openFriendPanel({id: f.friend_id, username: username, custom_folders: []}); };
+                div.innerHTML = `<img src="${avatar}"><div class="name">@${username}</div><i class="fas fa-chevron-right" style="color:var(--text-muted); font-size:14px;"></i>`;
+                container.appendChild(div);
+            });
+        }
+        async function toggleFriend() {
+            if(!currentUser || !activeFriendProfile) return; const btn = document.getElementById('btn-toggle-friend');
+            const isFollowing = myFriends.find(f => f.friend_id === activeFriendProfile.id);
+            if(isFollowing) {
+                myFriends = myFriends.filter(f => f.friend_id !== activeFriendProfile.id);
+                localStorage.setItem('ct_friends_'+currentUser.id, JSON.stringify(myFriends));
+                btn.innerHTML = `<i class="fas fa-user-plus"></i> Ikuti`; btn.style.background = 'var(--accent)'; btn.style.color = 'white';
+                if(navigator.onLine) await window.supabaseClient.from('ct_friends').delete().eq('user_id', currentUser.id).eq('friend_id', activeFriendProfile.id);
+            } else {
+                myFriends.push({ friend_id: activeFriendProfile.id, ct_profiles: { username: activeFriendProfile.username, avatar_url: document.getElementById('friend-panel-avatar').src } });
+                localStorage.setItem('ct_friends_'+currentUser.id, JSON.stringify(myFriends));
+                btn.innerHTML = `<i class="fas fa-user-check"></i> Mengikuti`; btn.style.background = 'rgba(0,0,0,0.05)'; btn.style.color = 'var(--text-main)';
+                if(navigator.onLine) await window.supabaseClient.from('ct_friends').insert({ user_id: currentUser.id, friend_id: activeFriendProfile.id });
+            } renderFriends();
+        }
+
+        async function searchFriend() {
+            document.getElementById('friend-search-input').blur(); 
+            const input = document.getElementById('friend-search-input').value.trim().toLowerCase();
+            const msg = document.getElementById('friend-search-msg'); msg.style.color = 'var(--text-main)';
+            if(!input) { msg.innerText = "Masukkan username terlebih dahulu."; msg.style.color = 'var(--danger)'; return; }
+            if(currentUser && input === currentUser.email.split('@')[0]) { msg.innerText = "Ini adalah username kamu sendiri."; msg.style.color = 'var(--danger)'; return; }
+            if(!navigator.onLine) { msg.innerText = "Pencarian butuh koneksi internet."; msg.style.color = 'var(--danger)'; return; }
+            msg.innerText = "Mencari teman...";
+
+            const { data } = await window.supabaseClient.from('ct_profiles').select('id, username, custom_folders').eq('username', input).single();
+            if (data) { msg.innerText = ""; document.getElementById('friend-search-input').value = ""; openFriendPanel(data); } else { msg.innerText = "Akun tidak ditemukan."; msg.style.color = 'var(--danger)'; }
+        }
+
+        async function openFriendPanel(friendData) {
+            openLayer('friend_panel'); activeFriendProfile = friendData;
+            document.getElementById('friend-panel-username').innerText = "@" + friendData.username;
+            document.getElementById('friend-panel').style.transform = 'translateX(0)';
+            document.getElementById('friend-stat-watched').innerText = "0"; document.getElementById('friend-stat-watchlist').innerText = "0"; document.getElementById('friend-stat-favorite').innerText = "0";
+            
+            const isFollowing = myFriends.find(f => f.friend_id === friendData.id); const btn = document.getElementById('btn-toggle-friend');
+            if(isFollowing) { btn.innerHTML = `<i class="fas fa-user-check"></i> Mengikuti`; btn.style.background = 'rgba(0,0,0,0.05)'; btn.style.color = 'var(--text-main)'; } 
+            else { btn.innerHTML = `<i class="fas fa-user-plus"></i> Ikuti`; btn.style.background = 'var(--accent)'; btn.style.color = 'white'; }
+
+            const profileReq = await fetchUserProfile(friendData.id, 'friend-panel-avatar');
+            friendFolders = profileReq?.custom_folders || []; friendFilter = 'all'; document.getElementById('f-btn-all').click();
+            
+            if(navigator.onLine) {
+                const { data } = await window.supabaseClient.from('ct_watch_history').select('*').eq('user_id', friendData.id);
+                if (data) { friendTrackerCache = data; renderFriendTrackerData(); calculateWatchTime(friendTrackerCache, 'friend-stat-watchtime'); healRuntimes(friendTrackerCache); }
+            } else { document.getElementById('friend-tracker-content').innerHTML = "<p style='font-size:14px; text-align:center;'>Internet Offline.</p>"; }
+        }
+        
+        function setFriendFilter(filterType, btnElement) { 
+            friendFilter = filterType; document.querySelectorAll('#friend-panel .segmented-btn').forEach(btn => btn.classList.remove('active')); 
+            if(btnElement) btnElement.classList.add('active'); 
+            if(filterType !== 'folders' && filterType !== 'folder_view') friendActiveFolder = '';
+            renderFriendTrackerData(); 
+        }
+
         function openFriendFolder(encodedPath) { 
-            // Sama dengan navigasi local, tanpa memicu layer/History stack
             friendActiveFolder = decodeURIComponent(encodedPath); 
             friendFilter = 'folder_view'; 
             renderFriendTrackerData(); 
@@ -1179,7 +1269,6 @@
             if(friendFilter === 'folders' || friendFilter === 'folder_view') {
                 document.getElementById('sort-friend-tracker').style.display = 'block';
                 
-                // PERBAIKAN: Title bar dengan onclick navigateUpFriendFolder()
                 if(friendActiveFolder === "") { 
                     document.getElementById('friend-list-title').innerText = "Daftar Folder Teman"; 
                 } else { 
